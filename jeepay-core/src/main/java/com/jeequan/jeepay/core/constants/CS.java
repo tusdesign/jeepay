@@ -143,11 +143,14 @@ public class CS {
     public interface IF_CODE{
 
         String ALIPAY = "alipay";   // 支付宝官方支付
+
         String WXPAY = "wxpay";     // 微信官方支付
         String YSFPAY = "ysfpay";   // 云闪付开放平台
         String XXPAY = "xxpay";     // 小新支付
         String PPPAY = "pppay";     // Paypal 支付
-        String PLSPAY = "plspay";     // 计全支付plus
+        String PLSPAY = "plspay";    // 计全支付plus
+
+        String QIDIPAY="qidipay";    //启迪支付
     }
 
 
@@ -176,6 +179,8 @@ public class CS {
         String WX_NATIVE = "WX_NATIVE";  //微信扫码支付
 
         String PP_PC = "PP_PC"; // Paypal 支付
+
+        String QIDI_APP = "QIDI_APP";  //启迪app支付
     }
 
     //支付数据包 类型

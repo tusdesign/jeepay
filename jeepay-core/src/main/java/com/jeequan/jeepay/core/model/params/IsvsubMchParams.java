@@ -18,6 +18,7 @@ package com.jeequan.jeepay.core.model.params;
 import com.alibaba.fastjson.JSONObject;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.model.params.alipay.AlipayIsvsubMchParams;
+import com.jeequan.jeepay.core.model.params.qidipay.QidipayIsvsubMchParams;
 import com.jeequan.jeepay.core.model.params.wxpay.WxpayIsvsubMchParams;
 import com.jeequan.jeepay.core.model.params.ysf.YsfpayIsvsubMchParams;
 
@@ -38,6 +39,8 @@ public abstract class IsvsubMchParams {
             return JSONObject.parseObject(paramsStr, AlipayIsvsubMchParams.class);
         }else if(CS.IF_CODE.YSFPAY.equals(ifCode)){
             return JSONObject.parseObject(paramsStr, YsfpayIsvsubMchParams.class);
+        }else if(CS.IF_CODE.QIDIPAY.equals(ifCode)){
+            return JSONObject.parseObject(paramsStr, QidipayIsvsubMchParams.class);
         }
         return null;
     }
