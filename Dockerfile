@@ -5,7 +5,7 @@
 # docker build -t jeepay-deps:latest -f docs/Dockerfile .
 
 # 编译依赖缓存，请先执行上方命令
-FROM jeepay-deps:latest AS builder
+FROM oci.tuxm.art:8443/tusdesign/jeepay-deps:latest AS builder
 
 WORKDIR /workspace
 
@@ -30,7 +30,7 @@ COPY --from=builder /workspace/conf/${PLATFORM}/application.yml /workspace/appli
 
 EXPOSE $PORT
 
-CMD ["java", "-jar", "/workspace/jeepay-app.jar"]
+CMD ["java", "-jar", "/workspace/jeepay-app.jar","-Djavax.xml.accessExternalDTD=all"]
 
 # 编译命令
 # docker buildx build . --build-arg PORT=9216 --build-arg PLATFORM=payment -t jeepay-payment:latest
