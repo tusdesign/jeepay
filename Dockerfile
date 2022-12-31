@@ -5,7 +5,7 @@
 # docker build -t jeepay-deps:latest -f docs/Dockerfile .
 
 # 编译依赖缓存，请先执行上方命令
-FROM jeepay-deps:latest AS builder
+FROM oci.tuxm.art:8443/tusdesign/jeepay-deps:latest AS builder
 
 WORKDIR /workspace
 
