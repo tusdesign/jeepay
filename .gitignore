@@ -59,3 +59,4 @@ docker/rocketmq/broker/store/
 docker/rocketmq/namesrv/
 
 nohup.out
+.env
