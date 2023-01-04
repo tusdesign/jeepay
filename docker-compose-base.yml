@@ -20,7 +20,7 @@ services:
       - ./docs/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       jeepay:
-        ipv4_address: 192.168.65.10
+        ipv4_address: 172.23.80.10
   activemq:
     build:
       context: ./docker/activemq
@@ -39,7 +39,7 @@ services:
       - ./docker/activemq/activemq.xml:/opt/activemq/conf/activemq.xml
     networks:
       jeepay:
-        ipv4_address: 192.168.65.11
+        ipv4_address: 172.23.80.11
   redis:
     hostname: redis
     container_name: jeepay-redis
@@ -48,7 +48,7 @@ services:
       - "6380:6379"
     networks:
       jeepay:
-        ipv4_address: 192.168.65.12
+        ipv4_address: 172.23.80.12
     volumes:
       - redis:/data
 
@@ -56,7 +56,7 @@ networks:
   jeepay:
     ipam:
       config:
-        - subnet: 192.168.65.0/24
+        - subnet: 172.23.80.0/24
 
 volumes:
   mysql:

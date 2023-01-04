@@ -19,7 +19,7 @@ public class QidipayPaymentService extends AbstractPaymentService {
 
     @Override
     public boolean isSupport(String wayCode) {
-        return false;
+        return true;
     }
 
     @Override

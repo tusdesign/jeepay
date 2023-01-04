@@ -30,10 +30,10 @@ public class QidiApp extends QidipayPaymentService {
     @Override
     public String preCheck(UnifiedOrderRQ rq, PayOrder payOrder) {
 
-        QiDiAppOrderRQ bizRQ = (QiDiAppOrderRQ) rq;
-        if(StringUtils.isEmpty(bizRQ.getAuthCode())){
-            throw new BizException("用户支付条码[authCode]不可为空");
-        }
+//        QiDiAppOrderRQ bizRQ = (QiDiAppOrderRQ) rq;
+//        if(StringUtils.isEmpty(bizRQ.getAuthCode())){
+//            throw new BizException("用户支付条码[authCode]不可为空");
+//        }
         return null;
     }
 

@@ -4,6 +4,8 @@ server:
 spring:
   redis:
     database: 1    #1库：运营平台  #2库：商户系统 #3库：支付网关
+#  profiles:
+#    active: dev
 
 #系统业务参数
 isys:
