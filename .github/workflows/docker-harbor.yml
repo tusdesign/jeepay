@@ -1,0 +1,28 @@
+name: Docker Image CI
+
+on:
+  push:
+#     branches: [ "master" ]
+#   pull_request:
+#     branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        persist-credentials: false
+    - name: Set env
+      run: echo "TAG_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Run build and push docker to harbor
+      run: sh ./scripts/build_harbor.sh
+      env:
+        VERSION: ${{ env.TAG_VERSION }}
+        COMMIT_SHA: ${{ github.sha }}
+        HARBOR_USER: ${{ secrets.HARBOR_USER }}
+        HARBOR_PASS: ${{ secrets.HARBOR_PASS }}
+

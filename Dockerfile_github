@@ -11,8 +11,8 @@ WORKDIR /workspace
 
 COPY . /workspace
 
-RUN mkdir -p /root/.m2
-COPY ./docs/settings.xml /root/.m2/settings.xml
+# RUN mkdir -p /root/.m2
+# COPY ./docs/settings.xml /root/.m2/settings.xml
 
 RUN mvn clean package -Dmaven.test.skip=true -Ptest
 
@@ -30,7 +30,7 @@ COPY --from=builder /workspace/conf/${PLATFORM}/application.yml /workspace/appli
 
 EXPOSE $PORT
 
-CMD ["java", "-jar", "/workspace/jeepay-app.jar","-Djavax.xml.accessExternalDTD=all"]
+CMD ["java", "-jar", "/workspace/jeepay-app.jar"]
 
 # 编译命令
 # docker buildx build . --build-arg PORT=9216 --build-arg PLATFORM=payment -t jeepay-payment:latest
