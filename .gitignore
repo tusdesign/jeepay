@@ -60,6 +60,7 @@ docker/rocketmq/namesrv/
 
 /jeepay-payment/src/main/resources/application-dev.yml
 /jeepay-manager/src/main/resources/application-dev.yml
-
+/jeepay-merchant/src/main/resources/application-dev.yml
 nohup.out
 .env
+
