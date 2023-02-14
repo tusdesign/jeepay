@@ -9,24 +9,24 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 订单分析表
+ * 订单分析主表
  * </p>
  *
  * @author [mybatis plus generator]
- * @since 2023-02-03
+ * @since 2023-02-09
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("t_pay_order_statistics")
-public class PayOrderStatistics implements Serializable {
+@TableName("t_order_statistics_company")
+public class OrderStatisticsCompany implements Serializable {
 
     private static final long serialVersionUID=1L;
 
     /**
      * 订单分析报表主键ID
      */
-    private String orderStatisticsId;
+    private String statisticsCompanyId;
 
     /**
      * 商户号
@@ -82,11 +82,6 @@ public class PayOrderStatistics implements Serializable {
      * 创建时间
      */
     private Date createdAt;
-
-    /**
-     * 更新时间
-     */
-    private Date updatedAt;
 
 
 }

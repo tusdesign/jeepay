@@ -178,8 +178,8 @@ public class PayOrderExtend implements Serializable {
     /**
      * 会议id
      */
-    @TableField("meetingID")
-    private String meetingID;
+    @TableField("businessId")
+    private String businessId;
 
     /**
      * 交易类型

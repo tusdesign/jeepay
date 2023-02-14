@@ -23,11 +23,13 @@ import org.hibernate.validator.HibernateValidator;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.cors.CorsConfiguration;
@@ -38,7 +40,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.util.Arrays;
-
 /**
  * @Author terrfly
  * @Date 2019/11/7 15:19
@@ -47,8 +48,9 @@ import java.util.Arrays;
 @SpringBootApplication
 @EnableScheduling
 @MapperScan("com.jeequan.jeepay.service.mapper")    //Mybatis mapper接口路径
-@ComponentScan(basePackages = "com.jeequan.jeepay.*")   //由于MainApplication没有在项目根目录， 需要配置basePackages属性使得成功扫描所有Spring组件；
+@ComponentScan(basePackages = "com.jeequan.jeepay.*")
 @Configuration
+@EnableAspectJAutoProxy(exposeProxy=true)
 public class JeepayPayApplication {
 
     @Autowired private SystemYmlConfig systemYmlConfig;

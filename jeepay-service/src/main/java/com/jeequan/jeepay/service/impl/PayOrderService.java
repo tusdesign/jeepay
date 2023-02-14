@@ -24,6 +24,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+//import com.jeequan.jeepay.core.aop.Action;
+import com.jeequan.jeepay.core.aop.Action;
+import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.IsvInfo;
 import com.jeequan.jeepay.core.entity.MchInfo;
@@ -31,8 +34,10 @@ import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.entity.PayWay;
 import com.jeequan.jeepay.service.mapper.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -73,6 +78,8 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
     }
 
     /** 更新订单状态  【支付中】 --》 【支付成功】 **/
+
+    @Action("下单成功记录")
     public boolean updateIng2Success(String payOrderId, String channelOrderNo, String channelUserId){
 
         PayOrder updateRecord = new PayOrder();
@@ -118,7 +125,8 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         if(updateState == PayOrder.STATE_ING){
             return true;
         }else if(updateState == PayOrder.STATE_SUCCESS){
-            return updateIng2Success(payOrderId, channelOrderNo, channelUserId);
+            PayOrderService service = AopContext.currentProxy() != null ? (PayOrderService)AopContext.currentProxy() : this;
+            return service.updateIng2Success(payOrderId, channelOrderNo, channelUserId);
         }else if(updateState == PayOrder.STATE_FAIL){
             return updateIng2Fail(payOrderId, channelOrderNo, channelUserId, channelErrCode, channelErrMsg);
         }

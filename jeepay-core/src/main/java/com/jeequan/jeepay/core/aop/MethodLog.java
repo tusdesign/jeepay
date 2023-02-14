@@ -24,7 +24,8 @@ import java.lang.annotation.*;
 * @site https://www.jeequan.com
 * @date 2021/6/8 18:00
 */
-@Target({ ElementType.METHOD, ElementType.TYPE })
+
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface MethodLog {
