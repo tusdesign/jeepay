@@ -1,4 +1,4 @@
-package com.jeequan.jeepay.pay.config;
+package com.jeequan.jeepay.pay.filter;
 
 
 import org.springframework.stereotype.Component;

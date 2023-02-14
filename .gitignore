@@ -64,3 +64,4 @@ docker/rocketmq/namesrv/
 nohup.out
 .env
 
+/logs/

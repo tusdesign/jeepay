@@ -2,6 +2,7 @@ package com.jeequan.jeepay.service.mapper;
 
 import com.jeequan.jeepay.core.entity.PayOrderExtend;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -13,4 +14,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface PayOrderExtendMapper extends BaseMapper<PayOrderExtend> {
 
+    int updateRefundAmountAndCount(@Param("payOrderId") String payOrderId, @Param("currentRefundAmount") Long currentRefundAmount);
 }
