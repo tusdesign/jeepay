@@ -4,14 +4,13 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.jeequan.jeepay.core.entity.OrderStatisticsDept">
-        <id column="statistics_dept_id" property="statisticsDeptId" />
-        <result column="primary_statistics_id" property="primaryStatisticsId" />
+        <id column="id" property="id" />
+        <result column="analyse_id" property="analyseId" />
         <result column="mch_no" property="mchNo" />
         <result column="app_id" property="appId" />
         <result column="app_name" property="appName" />
         <result column="mch_name" property="mchName" />
         <result column="dept_name" property="deptName" />
-        <result column="statistic_type" property="statisticType" />
         <result column="amount" property="amount" />
         <result column="created_at" property="createdAt" />
     </resultMap>

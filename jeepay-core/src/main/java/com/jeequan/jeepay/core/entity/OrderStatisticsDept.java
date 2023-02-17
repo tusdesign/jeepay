@@ -1,11 +1,14 @@
 package com.jeequan.jeepay.core.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.util.Date;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * <p>
@@ -13,7 +16,7 @@ import lombok.experimental.Accessors;
  * </p>
  *
  * @author [mybatis plus generator]
- * @since 2023-02-09
+ * @since 2023-02-17
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -24,14 +27,15 @@ public class OrderStatisticsDept implements Serializable {
     private static final long serialVersionUID=1L;
 
     /**
-     * 订单分析报表主键ID
+     * ID
      */
-    private String statisticsDeptId;
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
 
     /**
-     * 分析主表Id
+     * 主表分析标识符
      */
-    private String primaryStatisticsId;
+    private Long analyseId;
 
     /**
      * 商户号
@@ -59,12 +63,7 @@ public class OrderStatisticsDept implements Serializable {
     private String deptName;
 
     /**
-     * 类型: 1-商户, 2-入住企业
-     */
-    private Byte statisticType;
-
-    /**
-     * 支付金额,单位分
+     * 部门账单金额,单位分
      */
     private Long amount;
 

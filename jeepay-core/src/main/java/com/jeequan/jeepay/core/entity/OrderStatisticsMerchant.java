@@ -1,14 +1,13 @@
 package com.jeequan.jeepay.core.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.IdType;
+import java.util.Date;
+import com.baomidou.mybatisplus.annotation.TableId;
+import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
-import java.util.Date;
 
 /**
  * <p>
@@ -21,8 +20,8 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@TableName("t_order_statistics_company")
-public class OrderStatisticsCompany implements Serializable {
+@TableName("t_order_statistics_merchant")
+public class OrderStatisticsMerchant implements Serializable {
 
     private static final long serialVersionUID=1L;
 
@@ -53,17 +52,12 @@ public class OrderStatisticsCompany implements Serializable {
     private String mchName;
 
     /**
-     * 企业账单金额,单位分
+     * 商户账单金额,单位分
      */
     private Long amount;
 
     /**
-     * 组织名称：企业名称或者部门名称
-     */
-    private String deptName;
-
-    /**
-     * 实付金额
+     * 实际结算金额
      */
     private Long amountInfact;
 

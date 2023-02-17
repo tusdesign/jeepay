@@ -78,8 +78,6 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
     }
 
     /** 更新订单状态  【支付中】 --》 【支付成功】 **/
-
-    @Action("下单成功记录")
     public boolean updateIng2Success(String payOrderId, String channelOrderNo, String channelUserId){
 
         PayOrder updateRecord = new PayOrder();
@@ -372,6 +370,11 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         return payListMap;
     }
 
+    @Action("下单成功记录")
+    public boolean initOrder(PayOrder order)
+    {
+       return this.save(order);
+    }
 
     /**
     *  计算支付订单商家入账金额

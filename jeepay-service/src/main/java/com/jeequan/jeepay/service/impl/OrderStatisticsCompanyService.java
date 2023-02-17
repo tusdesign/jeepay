@@ -1,8 +1,8 @@
 package com.jeequan.jeepay.service.impl;
 
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
-import com.jeequan.jeepay.service.mapper.OrderStatisticsCompanyMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.jeequan.jeepay.service.mapper.OrderStatisticsCompanyMapper;
 import org.springframework.stereotype.Service;
 
 /**

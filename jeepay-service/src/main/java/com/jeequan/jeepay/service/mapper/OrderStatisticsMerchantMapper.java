@@ -1,7 +1,7 @@
 package com.jeequan.jeepay.service.mapper;
 
+import com.jeequan.jeepay.core.entity.OrderStatisticsMerchant;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 
 /**
  * <p>
@@ -11,6 +11,6 @@ import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
  * @author [mybatis plus generator]
  * @since 2023-02-17
  */
-public interface OrderStatisticsCompanyMapper extends BaseMapper<OrderStatisticsCompany> {
+public interface OrderStatisticsMerchantMapper extends BaseMapper<OrderStatisticsMerchant> {
 
 }

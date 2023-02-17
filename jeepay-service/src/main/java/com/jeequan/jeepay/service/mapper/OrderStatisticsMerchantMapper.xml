@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.jeequan.jeepay.service.mapper.OrderStatisticsCompanyMapper">
+<mapper namespace="com.jeequan.jeepay.service.mapper.OrderStatisticsMerchantMapper">
 
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.jeequan.jeepay.core.entity.OrderStatisticsCompany">
+    <resultMap id="BaseResultMap" type="com.jeequan.jeepay.core.entity.OrderStatisticsMerchant">
         <id column="id" property="id" />
         <result column="mch_no" property="mchNo" />
         <result column="app_id" property="appId" />
         <result column="app_name" property="appName" />
         <result column="mch_name" property="mchName" />
         <result column="amount" property="amount" />
-        <result column="dept_name" property="deptName" />
         <result column="amount_infact" property="amountInfact" />
         <result column="analyse_id" property="analyseId" />
         <result column="static_state" property="staticState" />

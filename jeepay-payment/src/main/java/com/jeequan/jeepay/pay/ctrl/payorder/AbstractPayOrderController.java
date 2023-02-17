@@ -137,7 +137,8 @@ public abstract class AbstractPayOrderController extends ApiController {
                 payOrder = genPayOrder(bizRQ, mchInfo, mchApp, null, null);
                 String payOrderId = payOrder.getPayOrderId();
                 //订单入库 订单状态： 生成状态  此时没有和任何上游渠道产生交互。
-                payOrderService.save(payOrder);
+                //payOrderService.save(payOrder);
+                payOrderService.initOrder(payOrder);
 
                 QrCashierOrderRS qrCashierOrderRS = new QrCashierOrderRS();
                 QrCashierOrderRQ qrCashierOrderRQ = (QrCashierOrderRQ)bizRQ;
@@ -184,7 +185,8 @@ public abstract class AbstractPayOrderController extends ApiController {
 
             if(isNewOrder){
                 //订单入库 订单状态： 生成状态  此时没有和任何上游渠道产生交互。
-                payOrderService.save(payOrder);
+                //payOrderService.save(payOrder);
+                payOrderService.initOrder(payOrder);
             }
 
             //调起上游支付接口
