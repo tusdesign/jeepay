@@ -476,89 +476,87 @@ CREATE TABLE `t_pay_order_division_record` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1001 DEFAULT CHARSET=utf8mb4 COMMENT='分账记录表';
 
 
+--
+-- 订单拓展表`t_pay_order_extend`
+--
+
+DROP TABLE IF EXISTS `t_pay_order_extend`;
+CREATE TABLE `t_pay_order_extend` (
+  `pay_order_id` varchar(30)  NOT NULL COMMENT '支付订单号,关联主表',
+  `pid` varchar(36) DEFAULT '' COMMENT '人员Id',
+  `businessId` varchar(36) DEFAULT '' COMMENT '业务id',
+  `dealType` varchar(30)  DEFAULT '' COMMENT '交易类型：PERSONAL-个人支付,DEPARTMENTAL-部门支付',
+  `deptId` varchar(36) DEFAULT '' COMMENT '部门Id',
+  `account_state` tinyint DEFAULT '0' COMMENT '结账状态：0-未结账 1-已结账',
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+  PRIMARY KEY (`pay_order_id`),
+  KEY `created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单拓展表';
+
+
+--
+-- 企业账单分析表 `t_order_statistics_company`
+--
+
 DROP TABLE IF EXISTS `t_order_statistics_company`;
 CREATE TABLE `t_order_statistics_company` (
-  `statistics_company_id` varchar(30) NOT NULL COMMENT '订单分析报表主键ID',
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
   `mch_no` varchar(64) NOT NULL COMMENT '商户号',
   `app_id` varchar(64) NOT NULL COMMENT '应用ID',
   `app_name` varchar(64) NOT NULL COMMENT '应用名称',
   `mch_name` varchar(30) NOT NULL COMMENT '商户名称',
-  `dept_name` varchar(100) NOT NULL COMMENT '组织名称，部门或是入驻企业名称',
-  `statistic_type` tinyint NOT NULL COMMENT '类型: 1-商户, 2-入住企业',
-  `amount` bigint NOT NULL COMMENT '支付金额,单位分',
+  `amount` bigint NOT NULL COMMENT '企业账单金额,单位分',
+  `dept_name` varchar(100) NOT NULL COMMENT '组织名称：企业名称或者部门名称',
   `amount_infact` bigint NOT NULL DEFAULT '0' COMMENT '实付金额',
+  `analyse_id` bigint DEFAULT NULL COMMENT '报表分析标识',
   `static_state` tinyint NOT NULL DEFAULT '0' COMMENT '结账状态, 0-已结账,  1-未结账',
   `remark` varchar(512) NOT NULL COMMENT '备注',
   `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
-  PRIMARY KEY (`statistics_company_id`),
+  PRIMARY KEY (`id`),
   KEY `created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单分析主表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企业账单分析表';
 
 
-DROP TABLE IF EXISTS `t_pay_order_extend`;
-CREATE TABLE `t_pay_order_extend` (
-  `pay_order_id` varchar(30) NOT NULL COMMENT '支付订单号',
-  `mch_no` varchar(64) NOT NULL COMMENT '商户号',
-  `isv_no` varchar(64) DEFAULT NULL COMMENT '服务商号',
-  `app_id` varchar(64) NOT NULL COMMENT '应用ID',
-  `mch_name` varchar(30) NOT NULL COMMENT '商户名称',
-  `mch_type` tinyint NOT NULL COMMENT '类型: 1-普通商户, 2-特约商户(服务商模式)',
-  `mch_order_no` varchar(64) NOT NULL COMMENT '商户订单号',
-  `if_code` varchar(20) DEFAULT NULL COMMENT '支付接口代码',
-  `way_code` varchar(20) NOT NULL COMMENT '支付方式代码',
-  `amount` bigint NOT NULL COMMENT '支付金额,单位分',
-  `mch_fee_rate` decimal(20,6) NOT NULL COMMENT '商户手续费费率快照',
-  `mch_fee_amount` bigint NOT NULL COMMENT '商户手续费,单位分',
-  `currency` varchar(3) NOT NULL DEFAULT 'cny' COMMENT '三位货币代码,人民币:cny',
-  `state` tinyint NOT NULL DEFAULT '0' COMMENT '支付状态: 0-订单生成, 1-支付中, 2-支付成功, 3-支付失败, 4-已撤销, 5-已退款, 6-订单关闭',
-  `notify_state` tinyint NOT NULL DEFAULT '0' COMMENT '向下游回调状态, 0-未发送,  1-已发送',
-  `client_ip` varchar(32) DEFAULT NULL COMMENT '客户端IP',
-  `subject` varchar(64) NOT NULL COMMENT '商品标题',
-  `body` varchar(256) NOT NULL COMMENT '商品描述信息',
-  `channel_extra` varchar(512) DEFAULT NULL COMMENT '特定渠道发起额外参数',
-  `channel_user` varchar(64) DEFAULT NULL COMMENT '渠道用户标识,如微信openId,支付宝账号',
-  `channel_order_no` varchar(64) DEFAULT NULL COMMENT '渠道订单号',
-  `refund_state` tinyint NOT NULL DEFAULT '0' COMMENT '退款状态: 0-未发生实际退款, 1-部分退款, 2-全额退款',
-  `refund_times` int NOT NULL DEFAULT '0' COMMENT '退款次数',
-  `refund_amount` bigint NOT NULL DEFAULT '0' COMMENT '退款总金额,单位分',
-  `division_mode` tinyint DEFAULT '0' COMMENT '订单分账模式：0-该笔订单不允许分账, 1-支付成功按配置自动完成分账, 2-商户手动分账(解冻商户金额)',
-  `division_state` tinyint DEFAULT '0' COMMENT '订单分账状态：0-未发生分账, 1-等待分账任务处理, 2-分账处理中, 3-分账任务已结束(不体现状态)',
-  `division_last_time` datetime DEFAULT NULL COMMENT '最新分账时间',
-  `err_code` varchar(128) DEFAULT NULL COMMENT '渠道支付错误码',
-  `err_msg` varchar(256) DEFAULT NULL COMMENT '渠道支付错误描述',
-  `pid` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT '人员Id',
-  `businessId` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT '会议id',
-  `dealType` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT '交易类型',
-  `deptId` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT '' COMMENT '部门Id',
-  `notify_url` varchar(128) NOT NULL DEFAULT '' COMMENT '异步通知地址',
-  `return_url` varchar(128) DEFAULT '' COMMENT '页面跳转地址',
-  `account_state` tinyint DEFAULT '0' COMMENT '结账状态：0-未结账 1-已结账',
-  `expired_time` datetime DEFAULT NULL COMMENT '订单失效时间',
-  `success_time` datetime DEFAULT NULL COMMENT '订单支付成功时间',
-  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
-  `updated_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6) COMMENT '更新时间',
-  PRIMARY KEY (`pay_order_id`),
-  UNIQUE KEY `Uni_MchNo_MchOrderNo` (`mch_no`,`mch_order_no`),
-  KEY `created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='支付订单表';
-
+--
+-- 部门账单分析表 `t_order_statistics_dept`
+--
 
 DROP TABLE IF EXISTS `t_order_statistics_dept`;
 CREATE TABLE `t_order_statistics_dept` (
-  `statistics_dept_id` varchar(30) NOT NULL COMMENT '订单分析报表主键ID',
-  `primary_statistics_id` varchar(64) NOT NULL COMMENT '分析主表Id',
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `analyse_id` bigint NOT NULL COMMENT '企业分析表标识符',
   `mch_no` varchar(64) NOT NULL COMMENT '商户号',
   `app_id` varchar(64) NOT NULL COMMENT '应用ID',
   `app_name` varchar(64) NOT NULL COMMENT '应用名称',
   `mch_name` varchar(30) NOT NULL COMMENT '商户名称',
   `dept_name` varchar(100) NOT NULL COMMENT '部门名称',
-  `statistic_type` tinyint NOT NULL COMMENT '类型: 1-商户, 2-入住企业',
-  `amount` bigint NOT NULL COMMENT '支付金额,单位分',
+  `amount` bigint NOT NULL COMMENT '部门账单金额,单位分',
   `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
-  PRIMARY KEY (`statistics_dept_id`),
+  PRIMARY KEY (`id`),
   KEY `created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单分析部门表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部门账单分析表';
 
+
+--
+-- 商户订单分析表 `t_order_statistics_merchant`
+--
+
+DROP TABLE IF EXISTS `t_order_statistics_merchant`;
+CREATE TABLE `t_order_statistics_merchant` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
+  `mch_no` varchar(64) NOT NULL COMMENT '商户号',
+  `app_id` varchar(64) NOT NULL COMMENT '应用ID',
+  `app_name` varchar(64) NOT NULL COMMENT '应用名称',
+  `mch_name` varchar(30) NOT NULL COMMENT '商户名称',
+  `amount` bigint NOT NULL COMMENT '商户订单总额,单位分',
+  `amount_infact` bigint NOT NULL DEFAULT '0' COMMENT '实际结算金额',
+  `analyse_id` bigint DEFAULT NULL COMMENT '报表分析标识',
+  `static_state` tinyint NOT NULL DEFAULT '0' COMMENT '结账状态, 0-已结账,  1-未结账',
+  `remark` varchar(512) NOT NULL COMMENT '备注',
+  `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商户订单分析表';
 
 #####  ↑↑↑↑↑↑↑↑↑↑  表结构DDL  ↑↑↑↑↑↑↑↑↑↑  #####
 
