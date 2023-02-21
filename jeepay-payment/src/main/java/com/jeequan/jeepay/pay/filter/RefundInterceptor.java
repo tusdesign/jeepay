@@ -3,9 +3,11 @@ package com.jeequan.jeepay.pay.filter;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeequan.jeepay.core.beans.RequestKitBean;
+import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.entity.PayOrderExtend;
 import com.jeequan.jeepay.core.model.ApiRes;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
+import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ObjectUtils;
@@ -23,7 +25,7 @@ import java.io.PrintWriter;
 public class RefundInterceptor implements HandlerInterceptor {
 
     @Autowired
-    private PayOrderExtendService payOrderExtendService;
+    private PayOrderService payOrderService;
 
     @Autowired
     private RequestKitBean requestKitBean;
@@ -41,9 +43,10 @@ public class RefundInterceptor implements HandlerInterceptor {
                 return false;
             }
             String payOrderId = jsonObject.getString("payOrderId");
-            PayOrderExtend orderExtend = payOrderExtendService.getById(payOrderId);
-            if (orderExtend.getAccountState().equals(PayOrderExtend.ACCOUNT_STATE_FINISHED)) {
-                ApiRes res = ApiRes.customFail("退单失败:因为该订单已完成结算,如有必要请线下人工操作!");
+
+            PayOrder order = payOrderService.getById(payOrderId);
+            if (order.getState().equals(PayOrder.STATE_CLOSED)) {
+                ApiRes res = ApiRes.customFail("退单失败:因为该订单已关闭,如有必要请线下人工操作!");
                 returnJson(res, response);
                 return false;
             }

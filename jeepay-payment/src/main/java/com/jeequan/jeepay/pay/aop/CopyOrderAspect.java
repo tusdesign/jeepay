@@ -58,20 +58,16 @@ public class CopyOrderAspect {
         Object[] args = jp.getArgs();
         System.out.println("Aop.afterReturning() 目标方法+" + jp.getSignature().getName() + "返回值:" + retValue);
 
-        String payOrderId = String.valueOf(args[0]);
-        String channelOrderNo = String.valueOf(args[1]);
-        String channelUserId = String.valueOf(args[2]);
-
-        scheduledThreadPool.execute(() -> savePayOrderExtend(payOrderId, channelOrderNo, channelUserId));
+        PayOrder payOrder = (PayOrder)args[0];
+        scheduledThreadPool.execute(() -> savePayOrderExtend(payOrder));
     }
 
-    private boolean savePayOrderExtend(String payOrderId, String channelOrderNo, String channelUserId) {
-        PayOrder payOrder = payOrderService.getById(payOrderId);
+    private boolean savePayOrderExtend(PayOrder order) {
 
         PayOrderExtend payOrderExtend = new PayOrderExtend();
-        BeanUtils.copyProperties(payOrder, payOrderExtend);
+        payOrderExtend.setPayOrderId(order.getPayOrderId());
 
-        String extParam = payOrder.getExtParam();
+        String extParam = order.getExtParam();
         if (!ObjectUtils.isEmpty(extParam)) {
             JSONObject jsonObject = JSONObject.parseObject(extParam);
             if (!jsonObject.getString("businessId").isEmpty()) {

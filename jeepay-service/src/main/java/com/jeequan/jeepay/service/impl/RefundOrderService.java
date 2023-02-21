@@ -22,7 +22,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jeequan.jeepay.core.entity.RefundOrder;
 import com.jeequan.jeepay.core.exception.BizException;
-import com.jeequan.jeepay.service.mapper.PayOrderExtendMapper;
 import com.jeequan.jeepay.service.mapper.PayOrderMapper;
 import com.jeequan.jeepay.service.mapper.RefundOrderMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -45,8 +44,6 @@ import java.util.Date;
 public class RefundOrderService extends ServiceImpl<RefundOrderMapper, RefundOrder> {
 
     @Autowired private PayOrderMapper payOrderMapper;
-
-    @Autowired private PayOrderExtendMapper payOrderExtendMapper;
 
 
     /** 查询商户订单 **/
@@ -94,10 +91,6 @@ public class RefundOrderService extends ServiceImpl<RefundOrderMapper, RefundOrd
         int updateCount = payOrderMapper.updateRefundAmountAndCount(refundOrder.getPayOrderId(), refundOrder.getRefundAmount());
         if(updateCount <= 0){
             throw new BizException("更新订单数据异常");
-        }
-        int updateOrderCount = payOrderExtendMapper.updateRefundAmountAndCount(refundOrder.getPayOrderId(), refundOrder.getRefundAmount());
-        if(updateOrderCount <= 0){
-            throw new BizException("更新订单拓展表数据异常");
         }
         return true;
     }
