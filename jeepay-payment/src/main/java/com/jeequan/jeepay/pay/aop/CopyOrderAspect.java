@@ -82,8 +82,9 @@ public class CopyOrderAspect {
             if (!jsonObject.getString("deptId").isEmpty()) {
                 payOrderExtend.setDeptId(jsonObject.getString("deptId"));
             }
+            return payOrderExtendService.save(payOrderExtend);
         }
-        return payOrderExtendService.save(payOrderExtend);
+       return false;
     }
 
     @Around(value = "pointCut()")
