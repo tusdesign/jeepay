@@ -28,10 +28,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.core.constants.CS;
-import com.jeequan.jeepay.core.entity.IsvInfo;
-import com.jeequan.jeepay.core.entity.MchInfo;
-import com.jeequan.jeepay.core.entity.PayOrder;
-import com.jeequan.jeepay.core.entity.PayWay;
+import com.jeequan.jeepay.core.entity.*;
 import com.jeequan.jeepay.service.mapper.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.AopContext;
@@ -454,5 +451,18 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         wrapper.orderByDesc(PayOrder::getCreatedAt);
 
         return page(iPage, wrapper);
+    }
+
+    public List<OrderStatisticsDept> selectOrderCountByDept(String createTimeStart,String createTimeEnd)
+    {
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("createTimeStart",createTimeStart);
+        paramMap.put("createTimeEnd",createTimeEnd);
+        return this.getBaseMapper().selectOrderCountByDept(paramMap);
+    }
+
+    /** 更新订单状态为已完成 **/
+    public int updateOrderStateBatch(List<PayOrder> orderList){
+        return this.getBaseMapper().updateOrderStateBatch(orderList);
     }
 }

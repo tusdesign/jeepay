@@ -81,6 +81,34 @@
         GROUP BY groupDate
         ORDER BY groupDate desc
     </select>
+    <!--企业消费统计-->
+    <select id="selectOrderCountByDept" resultType="com.jeequan.jeepay.core.entity.OrderStatisticsDept" parameterType="java.util.Map" >
+        select e.deptId,o.mch_no,o.mch_name,o.app_id,a.app_name,ROUND(IFNULL(SUM(o.amount) - SUM(o.refund_amount), 0)/100, 2) AS amount
+        from t_pay_order o
+        join t_pay_order_extend e  on o.pay_order_id=e.pay_order_id
+        join t_mch_app a on o.app_id=a.app_id
+        where 1=1
+        <if test="createTimeStart != null"> AND created_at &gt;= #{createTimeStart} </if>
+        <if test="createTimeEnd != null"> AND created_at &lt;= #{createTimeEnd} </if>
+        and o.state in (2,5)
+        group by e.deptId,o.mch_no,o.mch_name,o.app_id,a.app_name
+    </select>
+
+    <!--更新订单状态为已完成-->
+    <update id="updateOrderStateBatch" parameterType="java.util.List">
+        update t_pay_order
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="state =case" suffix="end,">
+                <foreach collection="list" item="item" index="index">
+                    when pay_order_id=#{item.payOrderId} then #{item.state}
+                </foreach>
+            </trim>
+        </trim>
+        where pay_order_id in
+        <foreach collection="list" index="index" item="item" separator="," open="(" close=")">
+            #{item.payOrderId,jdbcType=VARCHAR}
+        </foreach>
+    </update>
 
     <!-- 更新订单退款金额和次数 -->
     <update id="updateRefundAmountAndCount">

@@ -7,6 +7,11 @@ spring:
 #  profiles:
 #    active: dev
 
+qiDi:
+  gateWay:
+    url: https://api-shanghai.sz9wang.com/api/v1
+    secret-key: ""
+
 #系统业务参数
 isys:
     jwt-secret: t7w3P8X6472qWc3u #生成jwt的秘钥。 要求每个系统有单独的秘钥管理机制。

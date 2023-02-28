@@ -16,6 +16,7 @@
 package com.jeequan.jeepay.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import org.apache.ibatis.annotations.Param;
 
@@ -37,6 +38,12 @@ public interface PayOrderMapper extends BaseMapper<PayOrder> {
     List<Map> payTypeCount(Map param);
 
     List<Map> selectOrderCount(Map param);
+
+    /** 更统计企业在各个档口的消费情况 **/
+    List<OrderStatisticsDept> selectOrderCountByDept(Map param);
+
+    /** 更新订单状态为已完成 **/
+    int updateOrderStateBatch(List<PayOrder> orderList);
 
     /** 更新订单退款金额和次数 **/
     int updateRefundAmountAndCount(@Param("payOrderId") String payOrderId, @Param("currentRefundAmount") Long currentRefundAmount);

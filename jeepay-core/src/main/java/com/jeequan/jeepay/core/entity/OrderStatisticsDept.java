@@ -1,6 +1,7 @@
 package com.jeequan.jeepay.core.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -63,6 +64,19 @@ public class OrderStatisticsDept implements Serializable {
     private String deptName;
 
     /**
+     * 公司名称
+     */
+    @TableField(exist=false)
+    private String companyName;
+
+    /**
+     * 部门id
+     */
+    @TableField(exist=false)
+    private String deptId;
+
+
+    /**
      * 部门账单金额,单位分
      */
     private Long amount;
@@ -71,6 +85,5 @@ public class OrderStatisticsDept implements Serializable {
      * 创建时间
      */
     private Date createdAt;
-
 
 }

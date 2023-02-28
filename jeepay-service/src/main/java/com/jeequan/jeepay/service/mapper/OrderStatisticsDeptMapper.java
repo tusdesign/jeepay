@@ -1,7 +1,10 @@
 package com.jeequan.jeepay.service.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
+
+import java.util.List;
 
 /**
  * <p>
@@ -12,5 +15,7 @@ import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
  * @since 2023-02-17
  */
 public interface OrderStatisticsDeptMapper extends BaseMapper<OrderStatisticsDept> {
+
+    public int insertBatch(List<OrderStatisticsDept> orderStatisticsDeptList);
 
 }

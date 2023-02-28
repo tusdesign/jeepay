@@ -4,17 +4,33 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.jeequan.jeepay.core.entity.OrderStatisticsMerchant">
-        <id column="id" property="id" />
-        <result column="mch_no" property="mchNo" />
-        <result column="app_id" property="appId" />
-        <result column="app_name" property="appName" />
-        <result column="mch_name" property="mchName" />
-        <result column="amount" property="amount" />
-        <result column="amount_infact" property="amountInfact" />
-        <result column="analyse_id" property="analyseId" />
-        <result column="static_state" property="staticState" />
-        <result column="remark" property="remark" />
-        <result column="created_at" property="createdAt" />
+        <id column="id" property="id"/>
+        <result column="mch_no" property="mchNo"/>
+        <result column="app_id" property="appId"/>
+        <result column="app_name" property="appName"/>
+        <result column="mch_name" property="mchName"/>
+        <result column="amount" property="amount"/>
+        <result column="amount_infact" property="amountInfact"/>
+        <result column="analyse_id" property="analyseId"/>
+        <result column="static_state" property="staticState"/>
+        <result column="remark" property="remark"/>
+        <result column="created_at" property="createdAt"/>
     </resultMap>
 
+    <!-- 批量新增 -->
+    <insert id="insertBatch">
+        INSERT INTO t_order_statistics_merchant (mch_no, app_id, app_name, mch_name,
+        amount,amount_infact,analyse_id,static_state,remark) VALUES
+        <foreach collection="list" separator="," item="item">
+            (#{item.mchNo},
+            #{item.appId},
+            #{item.appName},
+            #{item.mchName},
+            #{item.amount},
+            #{item.amountInfact},
+            #{item.analyseId}),
+            #{item.staticState}),
+            #{item.remark}),
+        </foreach>
+    </insert>
 </mapper>

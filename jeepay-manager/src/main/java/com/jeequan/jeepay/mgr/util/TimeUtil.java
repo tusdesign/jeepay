@@ -10,13 +10,13 @@ import java.util.Date;
 @Component
 public class TimeUtil {
 
-    private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
      * 获取昨天0点0分0秒的时间
      */
     @SneakyThrows
-    public String getBeforeFirstDayDate() throws Exception {
+    public static String getBeforeFirstDayDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         System.out.println("当前星期(日期)：" + format.format(calendar.getTime()));
@@ -33,7 +33,7 @@ public class TimeUtil {
      * 获取昨天天23点59分59秒的时间
      */
     @SneakyThrows
-    public String getBeforeLastDayDate() throws Exception {
+    public static String getBeforeLastDayDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.set(Calendar.HOUR_OF_DAY, 23);//将小时至23
@@ -48,7 +48,7 @@ public class TimeUtil {
      * 获取上一周1号0点0分0秒的时间
      */
     @SneakyThrows
-    public String getBeforeFirstWeekDate() throws Exception {
+    public static String getBeforeFirstWeekDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.WEEK_OF_YEAR, -1);
@@ -66,7 +66,7 @@ public class TimeUtil {
      * 获取上一周最后一天23点59分59秒的时间
      */
     @SneakyThrows
-    public String getBeforeLastWeekDate() throws Exception {
+    public static String getBeforeLastWeekDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.WEEK_OF_YEAR, -1);
@@ -82,7 +82,7 @@ public class TimeUtil {
      * 获取上一个月1号0点0分0秒的时间
      */
     @SneakyThrows
-    public String getBeforeFirstMonthDate() throws Exception {
+    public static String getBeforeFirstMonthDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.MONTH, -1);
         calendar.set(Calendar.DAY_OF_MONTH, 1);
@@ -98,7 +98,7 @@ public class TimeUtil {
      * 获取上个月的最后一天23点59分59秒的时间
      */
     @SneakyThrows
-    public String getBeforeLastMonthDate() throws Exception {
+    public static String getBeforeLastMonthDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         int month = calendar.get(Calendar.MONTH);
         calendar.set(Calendar.MONTH, month - 1);
@@ -114,7 +114,7 @@ public class TimeUtil {
      * 获取上年1号0点0分0秒的时间
      */
     @SneakyThrows
-    public String getBeforeFirstYearDate() throws Exception {
+    public static String getBeforeFirstYearDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.YEAR, -1);
@@ -131,7 +131,7 @@ public class TimeUtil {
      * 获取上年的最后一天23点59分59秒的时间
      */
     @SneakyThrows
-    public String getBeforeLastYearDate() throws Exception {
+    public static String getBeforeLastYearDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.YEAR, -1);

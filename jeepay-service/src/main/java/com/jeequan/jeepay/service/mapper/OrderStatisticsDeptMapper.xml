@@ -15,4 +15,12 @@
         <result column="created_at" property="createdAt" />
     </resultMap>
 
+    <!-- 批量新增 -->
+    <insert id="insertBatch">
+        INSERT INTO t_order_statistics_dept (analyse_id, mch_no, app_id, app_name, mch_name,dept_name,amount) VALUES
+        <foreach collection="list" separator="," item="item">
+            (#{item.analyseId},#{item.mchNo},#{item.appId},#{item.appName},#{item.mchName},#{item.deptName},#{item.amount})
+        </foreach>
+    </insert>
+
 </mapper>
