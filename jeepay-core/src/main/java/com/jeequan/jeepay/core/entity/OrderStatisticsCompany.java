@@ -26,6 +26,9 @@ public class OrderStatisticsCompany implements Serializable {
 
     private static final long serialVersionUID=1L;
 
+    public static final byte ACCOUNT_STATE_NUN = 0;//已结账
+    public static final byte ACCOUNT_STATE_FINISHED = 1;  //未结账
+
     /**
      * ID
      */
