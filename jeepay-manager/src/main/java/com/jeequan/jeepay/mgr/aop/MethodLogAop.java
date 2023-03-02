@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -122,9 +123,14 @@ public class MethodLogAop {
     public static String getAnnotationRemark(JoinPoint joinPoint) throws Exception {
 
         Signature sig = joinPoint.getSignature();
-        Method m = joinPoint.getTarget().getClass().getMethod(joinPoint.getSignature().getName(),  ((MethodSignature) sig).getParameterTypes());
+        //Method m = joinPoint.getTarget().getClass().getMethod(joinPoint.getSignature().getName(),  ((MethodSignature) sig).getParameterTypes());
 
-        MethodLog methodCache = m.getAnnotation(MethodLog.class);
+        MethodSignature methodSignature = (MethodSignature)joinPoint.getSignature();
+        Method method = null;
+        method = methodSignature.getMethod();
+
+        ReflectionUtils.makeAccessible(method);
+        MethodLog methodCache = method.getAnnotation(MethodLog.class);
         if (methodCache != null) {
             return methodCache.remark();
         }

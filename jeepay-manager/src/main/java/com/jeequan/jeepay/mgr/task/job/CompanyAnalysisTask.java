@@ -1,16 +1,15 @@
 package com.jeequan.jeepay.mgr.task.job;
 
-import ch.qos.logback.core.joran.conditional.ElseAction;
 import cn.hutool.core.collection.CollectionUtil;
-import com.alibaba.druid.sql.ast.statement.SQLIfStatement;
-import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.jeequan.jeepay.core.entity.MchApp;
+import com.jeequan.jeepay.core.aop.MethodLog;
+import com.jeequan.jeepay.core.cache.RedisUtil;
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
-import com.jeequan.jeepay.mgr.util.TimeUtil;
-import com.jeequan.jeepay.service.impl.*;
-import com.jeequan.jeepay.util.JeepayKit;
+import com.jeequan.jeepay.mgr.task.AbstractAnalysisTask;
+import com.jeequan.jeepay.service.impl.OrderStatisticsCompanyService;
+import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
+import com.jeequan.jeepay.service.impl.PayOrderExtendService;
+import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -18,18 +17,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Component("analysisTask")
+@Component("companyAnalysisTask")
 @Configuration
-public class AnalysisTask {
+public class CompanyAnalysisTask extends AbstractAnalysisTask {
 
     @Value(value = "${qiDi.gateWay.url}")
     private String gateWay;
@@ -52,34 +55,22 @@ public class AnalysisTask {
     @Autowired
     private OrderStatisticsDeptService orderStatisticsDeptService;
 
-    @Autowired
-    private OrderStatisticsMerchantService orderStatisticsMerchantService;
 
     /**
      * 根据周期段进行分析
      *
-     * @param cycle 1表示年，2表示月 3表示周
+     * @param period 1表示天，2表示周 ，3表示月 4表示年
      */
+    //@Async
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public void Analyse(int cycle) throws Exception {
+    @MethodLog(remark = "企业账单报表分析作业")
+    protected void process(int period) throws Exception {
 
-        String createTimeStart = "";//开始时间
-        String createTimeEnd = "";//结束时间
+        MutablePair<String, String> timePair = this.getPeriod(period);//时间段
+        Long analyseId = System.currentTimeMillis(); //产生版本号
 
-        if (1 == cycle) {
-            createTimeStart = TimeUtil.getBeforeFirstYearDate();
-            createTimeEnd = TimeUtil.getBeforeLastYearDate();
-        } else if (2 == cycle) {
-            createTimeStart = TimeUtil.getBeforeFirstMonthDate();
-            createTimeEnd = TimeUtil.getBeforeLastMonthDate();
-        } else if (3 == cycle) {
-            createTimeStart = TimeUtil.getBeforeFirstDayDate();
-            createTimeEnd = TimeUtil.getBeforeLastDayDate();
-        }
-
-        //产生版本号
-        Long analyseId = 0L;
-        List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(createTimeStart, createTimeEnd);
+        List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
 
         if (!CollectionUtil.isEmpty(orderStatisticsDeptList)) {
             orderStatisticsDeptList.forEach(item -> {
@@ -87,6 +78,7 @@ public class AnalysisTask {
                 MutablePair<String, String> mutablePair = getDept(item.getDeptId());
                 item.setDeptName(mutablePair.right);
                 item.setCompanyName(mutablePair.left);
+                item.setAnalyseId(analyseId);
             });
             boolean stepOne = orderStatisticsDeptService.saveBatch(orderStatisticsDeptList, 200);
             if (stepOne) {
@@ -99,6 +91,7 @@ public class AnalysisTask {
                     company.setStaticState(OrderStatisticsCompany.ACCOUNT_STATE_NUN);
                     company.setAmountInfact(0L);
                     company.setAnalyseId(analyseId);
+                    company.setRemark("企业账单分析");
                     company.setDeptName(item.getCompanyName());
                     return company;
                 }, Collectors.summingLong(OrderStatisticsDept::getAmount)));
@@ -123,24 +116,36 @@ public class AnalysisTask {
     @SneakyThrows
     private MutablePair<String, String> getDept(String deptId) {
 
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-API-KEY", secretKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        String[] nameArray;
 
-        HttpEntity<String> request =
-                new HttpEntity<String>(null, headers);
-        ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
+        String organization = RedisUtil.getString(deptId);
+        if (organization == null || organization.isEmpty()) {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-API-KEY", secretKey);
+            headers.setContentType(MediaType.APPLICATION_JSON);
 
-        if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
-            Map<String, Object> responseBody = responseMap.getBody();
-            if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
-                String fullPath = String.valueOf(responseBody.get("path"));
-                String[] nameArray = StringUtils.split(fullPath, "/");
-                return MutablePair.of(nameArray[0], nameArray[1]);
+            HttpEntity<String> request =
+                    new HttpEntity<String>(null, headers);
+            ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
+
+            if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
+                Map<String, Object> responseBody = responseMap.getBody();
+                if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
+
+                    String fullPath = String.valueOf(responseBody.get("path"));
+
+                    RedisUtil.set(deptId, fullPath, 30, TimeUnit.DAYS);
+
+                    nameArray = StringUtils.split(fullPath, "/");
+                    return MutablePair.of(nameArray[0], nameArray[1]);
+                }
             }
+        } else {
+            nameArray = StringUtils.split(organization, "/");
+            return MutablePair.of(nameArray[0], nameArray[1]);
+
         }
         return MutablePair.of("未知", "未知");
     }
-
 }

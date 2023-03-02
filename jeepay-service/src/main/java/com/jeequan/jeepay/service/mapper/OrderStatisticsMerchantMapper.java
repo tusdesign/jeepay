@@ -1,9 +1,11 @@
 package com.jeequan.jeepay.service.mapper;
 
+import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
 import com.jeequan.jeepay.core.entity.OrderStatisticsMerchant;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -15,5 +17,17 @@ import java.util.List;
  */
 public interface OrderStatisticsMerchantMapper extends BaseMapper<OrderStatisticsMerchant> {
 
+    /**
+     * 查询各档口的收入
+     * @param param
+     * @return
+     */
+    List<OrderStatisticsMerchant> selectOrderCountByMerchant(Map param);
+
+    /**
+     * 批量插入数据
+     * @param orderStatisticsMerchantList
+     * @return
+     */
     public int insertBatch(List<OrderStatisticsMerchant> orderStatisticsMerchantList);
 }

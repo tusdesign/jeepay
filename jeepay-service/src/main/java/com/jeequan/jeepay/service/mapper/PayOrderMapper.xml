@@ -88,8 +88,8 @@
         join t_pay_order_extend e  on o.pay_order_id=e.pay_order_id
         join t_mch_app a on o.app_id=a.app_id
         where 1=1
-        <if test="createTimeStart != null"> AND created_at &gt;= #{createTimeStart} </if>
-        <if test="createTimeEnd != null"> AND created_at &lt;= #{createTimeEnd} </if>
+        <if test="createTimeStart != null"> AND o.created_at &gt;= #{createTimeStart} </if>
+        <if test="createTimeEnd != null"> AND o.created_at &lt;= #{createTimeEnd} </if>
         and o.state in (2,5)
         group by e.deptId,o.mch_no,o.mch_name,o.app_id,a.app_name
     </select>

@@ -2,9 +2,11 @@ package com.jeequan.jeepay.mgr.task;
 
 
 import com.jeequan.jeepay.mgr.util.SpringContextUtils;
+import com.jeequan.jeepay.service.impl.SysJobService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
