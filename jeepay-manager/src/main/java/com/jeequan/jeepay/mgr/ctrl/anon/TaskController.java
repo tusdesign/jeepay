@@ -7,9 +7,12 @@ import com.jeequan.jeepay.core.entity.SysJob;
 import com.jeequan.jeepay.core.exception.BizException;
 import com.jeequan.jeepay.core.model.ApiRes;
 import com.jeequan.jeepay.mgr.bootstrap.TaskRunner;
+import com.jeequan.jeepay.mgr.rqrs.EnumTime;
+import com.jeequan.jeepay.mgr.rqrs.JobRQ;
 import com.jeequan.jeepay.mgr.task.CronTaskRegistrar;
 import com.jeequan.jeepay.mgr.task.SchedulingRunnable;
 import com.jeequan.jeepay.service.impl.SysJobService;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/anon/task")
@@ -31,82 +35,29 @@ public class TaskController {
     @Autowired
     private CronTaskRegistrar cronTaskRegistrar;
 
-    @RequestMapping(value = "/add", method = RequestMethod.POST)
-    @MethodLog(remark = "添加任务")
-    public ApiRes taskAdd(SysJob sysJob) throws BizException {
-        boolean success = sysJobService.save(sysJob);
-        if (!success)
-            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "新增失败");
-        else {
-            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams());
-                cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
-            }
+    @RequestMapping(value = "/start", method = RequestMethod.POST)
+    public ApiRes startAtOnce(JobRQ job) throws BizException {
+
+        if (Objects.isNull(job.getTaskType())) {
+            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "任务类型不能为空");
         }
-        return ApiRes.ok();
-    }
-
-    @RequestMapping(value = "/modify", method = RequestMethod.POST)
-    @MethodLog(remark = "修改任务")
-    public ApiRes taskModify(SysJob sysJob) throws BizException {
-        boolean success = sysJobService.updateById(sysJob);
-        if (!success)
-            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_UPDATE, "修改失败");
-        else {
-            //先移除再添加
-            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams());
-                cronTaskRegistrar.removeCronTask(task);
-            }
-
-            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams());
-                cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
-            }
+        if (StringUtils.isEmpty(job.getCronType())) {
+            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "任务周期不能为空");
         }
-        return ApiRes.ok();
-    }
+        SysJob sysJob = new SysJob();
+        sysJob.setJobId(job.getJobId());
+        sysJob.setJobStatus(SysJob.NORMAL);
+        sysJob.setMethodName("process");
+        sysJob.setMethodParams(String.valueOf(EnumTime.TIMETYPE.get(job.getCronType())));
 
-    @RequestMapping(value = "/remove", method = RequestMethod.POST)
-    @MethodLog(remark = "移除任务")
-    public ApiRes taskDelete(SysJob sysJob) throws BizException {
-        boolean success = sysJobService.removeById(sysJob.getJobId());
-        if (!success)
-            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_DELETE, "删除失败");
-        else {
-            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams());
-                cronTaskRegistrar.removeCronTask(task);
-            }
+        if (job.getTaskType() == 1) {
+            sysJob.setBeanName("companyAnalysisTask");
+        } else if (job.getTaskType() == 2) {
+            sysJob.setBeanName("merchatAnalysisTask");
         }
-        return ApiRes.ok();
-    }
-
-
-    @RequestMapping(value = "/list", method = RequestMethod.POST)
-    @MethodLog(remark = "列出所有任务")
-    public ApiRes taskList() throws BizException {
-        List<SysJob> sysJobList = sysJobService.list();
-        return ApiRes.ok(sysJobList);
-    }
-
-
-    @RequestMapping(value = "/operation", method = RequestMethod.POST)
-    public ApiRes operation(SysJob existedSysJob) {
-        SchedulingRunnable task = new SchedulingRunnable(existedSysJob.getBeanName(), existedSysJob.getMethodName(), existedSysJob.getMethodParams());
-        if (existedSysJob.getJobStatus().equals(SysJob.NORMAL)) {
-            cronTaskRegistrar.addCronTask(task, existedSysJob.getCronExpression());
-        } else {
-            cronTaskRegistrar.removeCronTask(task);
+        if (StringUtils.isEmpty(job.getCronExpression())) {
+            sysJob.setCronExpression("0 0 * * * *");
         }
-        return ApiRes.ok();
-    }
-
-
-    @RequestMapping(value = "/once", method = RequestMethod.POST)
-    @MethodLog(remark = "立即执行任务")
-    public ApiRes startAtOnce(SysJob sysJob) throws BizException {
-        sysJob.setCronExpression("0 0 * * * *");
         boolean success = sysJobService.save(sysJob);
         if (!success)
             return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "执行失败");
@@ -116,7 +67,6 @@ public class TaskController {
                 cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
             }
         }
-        return ApiRes.ok();
+        return ApiRes.ok(job);
     }
-
 }

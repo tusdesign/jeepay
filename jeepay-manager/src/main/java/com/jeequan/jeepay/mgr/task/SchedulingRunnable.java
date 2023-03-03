@@ -11,6 +11,7 @@ import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.UUID;
 
 public class SchedulingRunnable implements Runnable {
 
@@ -22,14 +23,23 @@ public class SchedulingRunnable implements Runnable {
 
     private String params;
 
+    private String jobId;
+
     public SchedulingRunnable(String beanName, String methodName) {
         this(beanName, methodName, null);
     }
 
     public SchedulingRunnable(String beanName, String methodName, String params) {
+        this(beanName, methodName, params, UUID.randomUUID().toString());
         this.beanName = beanName;
         this.methodName = methodName;
         this.params = params;
+    }
+    public SchedulingRunnable(String beanName, String methodName, String params,String jobId) {
+        this.beanName = beanName;
+        this.methodName = methodName;
+        this.params = params;
+        this.jobId=jobId;
     }
 
     @Override

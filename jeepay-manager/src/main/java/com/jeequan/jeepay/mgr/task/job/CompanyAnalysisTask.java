@@ -118,6 +118,7 @@ public class CompanyAnalysisTask extends AbstractAnalysisTask {
 
         String[] nameArray;
 
+        //先去缓存中查一下
         String organization = RedisUtil.getString(deptId);
         if (organization == null || organization.isEmpty()) {
             RestTemplate restTemplate = new RestTemplate();
@@ -135,7 +136,7 @@ public class CompanyAnalysisTask extends AbstractAnalysisTask {
 
                     String fullPath = String.valueOf(responseBody.get("path"));
 
-                    RedisUtil.set(deptId, fullPath, 30, TimeUnit.DAYS);
+                    RedisUtil.setString(deptId, fullPath, 30, TimeUnit.DAYS);
 
                     nameArray = StringUtils.split(fullPath, "/");
                     return MutablePair.of(nameArray[0], nameArray[1]);

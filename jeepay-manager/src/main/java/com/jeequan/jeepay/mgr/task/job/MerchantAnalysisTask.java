@@ -52,6 +52,7 @@ public class MerchantAnalysisTask extends AbstractAnalysisTask {
             orderStatisticsDeptList.forEach(item -> {
                 item.setStaticState(OrderStatisticsCompany.ACCOUNT_STATE_NUN);
                 item.setAmountInfact(0L);
+                item.setRemark("商户账单报表分析作业");
                 item.setAnalyseId(analyseId);
             });
             orderStatisticsMerchantService.saveBatch(orderStatisticsDeptList, 200);

@@ -15,5 +15,4 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SysJobService extends ServiceImpl<SysJobMapper, SysJob> {
-
 }

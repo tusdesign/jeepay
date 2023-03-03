@@ -29,8 +29,8 @@ public class SysJob implements Serializable {
     /**
      * 任务ID
      */
-    @TableId(value = "job_id", type = IdType.AUTO)
-    private Integer jobId;
+    @TableId(value = "job_id", type = IdType.ASSIGN_UUID)
+    private String jobId;
     /**
      * bean名称
      */

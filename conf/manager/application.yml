@@ -134,3 +134,8 @@ isys:
   mq:
     vender: activeMQ  #  切换MQ厂商， 支持：【 activeMQ  rabbitMQ  rocketMQ  aliYunRocketMQ 】， 需正确配置 【对应的yml参数】 和 【jeepay-components-mq项目下pom.xml中的依赖包】。
 
+qiDi:
+  gateWay:
+    url: https://api.sz9wang.com/api/v1
+    secret-key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3R1eG0uYXJ0IiwidXNlcm5hbWUiOiJ0dXNkZXNpZ24ifQ.0SCNQBLp6_e3EEcQcT0Rqwp1QJ4AonY5eoOTiKMIkk0"
+
