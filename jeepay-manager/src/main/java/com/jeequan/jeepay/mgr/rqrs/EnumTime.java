@@ -20,7 +20,7 @@ public class EnumTime {
         public static TIMETYPE get(String key) {
             TIMETYPE[] values = TIMETYPE.values();
             for (TIMETYPE object : values) {
-                if (object.key == key) {
+                if (object.key.equals(key)) {
                     return object;
                 }
             }

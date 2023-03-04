@@ -130,9 +130,6 @@ public class MethodLogAop {
         Method method = null;
         method = methodSignature.getMethod();
 
-        //Field field= methodSignature.getClass().getDeclaredField("userName");
-        //String str=String.valueOf(field.get(joinPoint.getThis()));
-
         ReflectionUtils.makeAccessible(method);
         MethodLog methodCache = method.getAnnotation(MethodLog.class);
         if (methodCache != null) {

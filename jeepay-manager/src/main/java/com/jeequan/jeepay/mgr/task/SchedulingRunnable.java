@@ -1,13 +1,10 @@
 package com.jeequan.jeepay.mgr.task;
 
 
-import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.mgr.util.SpringContextUtils;
-import com.jeequan.jeepay.service.impl.SysJobService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Method;
@@ -25,6 +22,8 @@ public class SchedulingRunnable implements Runnable {
     private String params;
 
     private String jobId;
+
+    public SchedulingRunnable(){}
 
     public SchedulingRunnable(String beanName, String methodName) {
         this(beanName, methodName, null);
@@ -44,8 +43,8 @@ public class SchedulingRunnable implements Runnable {
     }
 
     @Override
-    @MethodLog(remark = "fkdjfdk")
     public void run() {
+
         logger.info("定时任务开始执行 - bean：{}，方法：{}，参数：{}", beanName, methodName, params);
         long startTime = System.currentTimeMillis();
 
@@ -54,14 +53,14 @@ public class SchedulingRunnable implements Runnable {
 
             Method method = null;
             if (StringUtils.isNotEmpty(params)) {
-                method = target.getClass().getDeclaredMethod(methodName, String.class);
+                method = target.getClass().getDeclaredMethod(methodName, String.class,String.class);
             } else {
                 method = target.getClass().getDeclaredMethod(methodName);
             }
 
             ReflectionUtils.makeAccessible(method);
             if (StringUtils.isNotEmpty(params)) {
-                method.invoke(target, params);
+                method.invoke(target, params,this.jobId);
             } else {
                 method.invoke(target);
             }

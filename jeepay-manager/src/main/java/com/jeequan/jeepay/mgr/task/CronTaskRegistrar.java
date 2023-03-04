@@ -1,6 +1,7 @@
 package com.jeequan.jeepay.mgr.task;
 
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
@@ -8,6 +9,7 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -45,7 +47,12 @@ public class CronTaskRegistrar implements DisposableBean {
 
     public ScheduledTask scheduleCronTask(CronTask cronTask) {
         ScheduledTask scheduledTask = new ScheduledTask();
-        scheduledTask.future = this.taskScheduler.schedule(cronTask.getRunnable(), cronTask.getTrigger());
+        if(cronTask.getExpression().equals("0 0 * * * *")){
+            scheduledTask.future = this.taskScheduler.schedule(cronTask.getRunnable(),new Date());
+        }else if(!StringUtils.isEmpty(cronTask.getExpression())){
+            scheduledTask.future = this.taskScheduler.schedule(cronTask.getRunnable(), cronTask.getTrigger());
+        }
+
         return scheduledTask;
     }
 

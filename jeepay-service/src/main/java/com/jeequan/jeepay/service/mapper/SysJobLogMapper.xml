@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jeequan.jeepay.service.mapper.SysJobLogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.jeequan.jeepay.core.entity.SysJobLog">
+        <id column="id" property="id" />
+        <result column="job_id" property="jobId" />
+        <result column="exectue_end_time" property="exectueEndTime" />
+        <result column="exectue_start_time" property="exectueStartTime" />
+        <result column="exectue_result" property="exectueResult" />
+        <result column="remark" property="remark" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+</mapper>

@@ -1,18 +1,18 @@
-package com.jeequan.jeepay.mgr.task;
+package com.jeequan.jeepay.mgr.task.job;
 
 import com.jeequan.jeepay.mgr.rqrs.EnumTime;
 import com.jeequan.jeepay.mgr.util.TimeUtil;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.MutablePair;
-import org.springframework.transaction.annotation.Transactional;
 
-public abstract class AbstractAnalysisTask {
+public abstract class AbstractAnalysisJob {
 
-    protected abstract void process(String period) throws Exception;
+    public abstract void process(String period,String jobId) throws Exception;
 
     protected MutablePair<String, String> getPeriod(String period) throws Exception {
+
         String createTimeStart = "";//开始时间
         String createTimeEnd = "";//结束时间
+
         if (EnumTime.TIMETYPE.YEAR.key==period) {
             createTimeStart = TimeUtil.getBeforeFirstYearDate();
             createTimeEnd = TimeUtil.getBeforeLastYearDate();

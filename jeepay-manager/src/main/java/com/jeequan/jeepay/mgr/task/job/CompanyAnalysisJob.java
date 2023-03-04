@@ -1,11 +1,10 @@
 package com.jeequan.jeepay.mgr.task.job;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.jeequan.jeepay.core.aop.MethodLog;
+import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.cache.RedisUtil;
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
-import com.jeequan.jeepay.mgr.task.AbstractAnalysisTask;
 import com.jeequan.jeepay.service.impl.OrderStatisticsCompanyService;
 import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
@@ -17,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.*;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -30,9 +28,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@Component("companyAnalysisTask")
+@Component("companyAnalysisJob")
 @Configuration
-public class CompanyAnalysisTask extends AbstractAnalysisTask {
+public class CompanyAnalysisJob extends AbstractAnalysisJob {
 
     @Value(value = "${qiDi.gateWay.url}")
     private String gateWay;
@@ -64,7 +62,8 @@ public class CompanyAnalysisTask extends AbstractAnalysisTask {
     //@Async
     @Override
     @Transactional(rollbackFor = Exception.class)
-    protected void process(String period) throws Exception {
+    @Action("企业账单报表分析")
+    public void process(String period,String jobId) throws Exception {
 
         MutablePair<String, String> timePair = this.getPeriod(period);//时间段
         Long analyseId = System.currentTimeMillis(); //产生版本号
