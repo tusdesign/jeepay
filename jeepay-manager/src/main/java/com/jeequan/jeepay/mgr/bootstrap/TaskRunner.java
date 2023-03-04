@@ -35,7 +35,7 @@ public class TaskRunner implements CommandLineRunner {
 
         if (CollectionUtils.isNotEmpty(jobList)) {
             for (SysJob job : jobList) {
-                SchedulingRunnable task = new SchedulingRunnable(job.getBeanName(), job.getMethodName(), job.getMethodParams());
+                SchedulingRunnable task = new SchedulingRunnable(job.getBeanName(), job.getMethodName(), job.getMethodParams(),job.getJobId());
                 cronTaskRegistrar.addCronTask(task, job.getCronExpression());
             }
             logger.info("定时任务已加载完毕...");

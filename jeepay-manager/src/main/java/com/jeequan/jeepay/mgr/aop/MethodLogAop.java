@@ -40,6 +40,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.concurrent.Executors;
@@ -128,6 +129,9 @@ public class MethodLogAop {
         MethodSignature methodSignature = (MethodSignature)joinPoint.getSignature();
         Method method = null;
         method = methodSignature.getMethod();
+
+        //Field field= methodSignature.getClass().getDeclaredField("userName");
+        //String str=String.valueOf(field.get(joinPoint.getThis()));
 
         ReflectionUtils.makeAccessible(method);
         MethodLog methodCache = method.getAnnotation(MethodLog.class);

@@ -63,7 +63,7 @@ public class TaskController {
             return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "执行失败");
         else {
             if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams());
+                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams(),sysJob.getJobId());
                 cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
             }
         }

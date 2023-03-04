@@ -1,6 +1,7 @@
 package com.jeequan.jeepay.mgr.task;
 
 
+import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.mgr.util.SpringContextUtils;
 import com.jeequan.jeepay.service.impl.SysJobService;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +44,7 @@ public class SchedulingRunnable implements Runnable {
     }
 
     @Override
+    @MethodLog(remark = "fkdjfdk")
     public void run() {
         logger.info("定时任务开始执行 - bean：{}，方法：{}，参数：{}", beanName, methodName, params);
         long startTime = System.currentTimeMillis();

@@ -36,11 +36,9 @@ public class MerchantAnalysisTask extends AbstractAnalysisTask {
      *
      * @param period 1表示天，2表示周 ，3表示月 4表示年
      */
-    @Async
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @MethodLog(remark = "商户账单报表分析作业")
-    protected void process(int period) throws Exception {
+    protected void process(String period) throws Exception {
 
         MutablePair<String, String> timePair = this.getPeriod(period);//时间段
         Long analyseId = System.currentTimeMillis();//产生版本号
