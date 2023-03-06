@@ -80,19 +80,19 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
             });
             boolean stepOne = orderStatisticsDeptService.saveBatch(orderStatisticsDeptList, 200);
             if (stepOne) {
-                Map<OrderStatisticsCompany, Long> map = orderStatisticsDeptList.stream().collect(Collectors.groupingBy((item) -> {
+                Map<OrderStatisticsCompany, Double> map = orderStatisticsDeptList.stream().collect(Collectors.groupingBy((item) -> {
                     OrderStatisticsCompany company = new OrderStatisticsCompany();
                     company.setAppId(item.getAppId());
                     company.setAppName(item.getAppName());
                     company.setMchNo(item.getMchNo());
                     company.setMchName(item.getMchName());
                     company.setStaticState(OrderStatisticsCompany.ACCOUNT_STATE_NUN);
-                    company.setAmountInfact(0L);
+                    company.setAmountInfact(0D);
                     company.setAnalyseId(analyseId);
                     company.setRemark("企业账单分析");
                     company.setDeptName(item.getCompanyName());
                     return company;
-                }, Collectors.summingLong(OrderStatisticsDept::getAmount)));
+                }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
 
                 List<OrderStatisticsCompany> orderStatisticsCompanyList = new ArrayList<>();
                 map.forEach((k, v) -> {

@@ -54,12 +54,12 @@ public class OrderStatisticsMerchant implements Serializable {
     /**
      * 商户账单金额,单位分
      */
-    private Long amount;
+    private Double amount;
 
     /**
      * 实际结算金额
      */
-    private Long amountInfact;
+    private Double amountInfact;
 
     /**
      * 报表分析标识

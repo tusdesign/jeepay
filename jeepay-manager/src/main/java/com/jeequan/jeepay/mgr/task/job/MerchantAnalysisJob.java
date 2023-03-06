@@ -48,7 +48,7 @@ public class MerchantAnalysisJob extends AbstractAnalysisJob {
 
             orderStatisticsDeptList.forEach(item -> {
                 item.setStaticState(OrderStatisticsCompany.ACCOUNT_STATE_NUN);
-                item.setAmountInfact(0L);
+                item.setAmountInfact(0D);
                 item.setRemark("商户账单报表分析作业");
                 item.setAnalyseId(analyseId);
             });

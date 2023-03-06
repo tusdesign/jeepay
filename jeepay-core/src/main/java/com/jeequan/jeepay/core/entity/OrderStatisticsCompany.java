@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -58,7 +59,7 @@ public class OrderStatisticsCompany implements Serializable {
     /**
      * 企业账单金额,单位分
      */
-    private Long amount;
+    private Double amount;
 
     /**
      * 组织名称：企业名称或者部门名称
@@ -68,7 +69,7 @@ public class OrderStatisticsCompany implements Serializable {
     /**
      * 实付金额
      */
-    private Long amountInfact;
+    private Double amountInfact;
 
     /**
      * 报表分析标识

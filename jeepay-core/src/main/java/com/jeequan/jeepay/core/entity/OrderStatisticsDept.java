@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -79,7 +80,7 @@ public class OrderStatisticsDept implements Serializable {
     /**
      * 部门账单金额,单位分
      */
-    private Long amount;
+    private double amount;
 
     /**
      * 创建时间
