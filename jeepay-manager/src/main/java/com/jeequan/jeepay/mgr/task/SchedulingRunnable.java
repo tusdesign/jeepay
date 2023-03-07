@@ -1,6 +1,7 @@
 package com.jeequan.jeepay.mgr.task;
 
 
+import com.jeequan.jeepay.core.entity.SysJob;
 import com.jeequan.jeepay.mgr.util.SpringContextUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -14,6 +15,8 @@ import java.util.UUID;
 public class SchedulingRunnable implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulingRunnable.class);
+
+    private SysJob job;
 
     private String beanName;
 
@@ -34,14 +37,24 @@ public class SchedulingRunnable implements Runnable {
         this.beanName = beanName;
         this.methodName = methodName;
         this.params = params;
+        this.jobId=UUID.randomUUID().toString();
+        this.job=null;
+
     }
     public SchedulingRunnable(String beanName, String methodName, String params,String jobId) {
         this.beanName = beanName;
         this.methodName = methodName;
         this.params = params;
         this.jobId=jobId;
+        this.job=null;
     }
-
+    public SchedulingRunnable(SysJob job) {
+        this.beanName = job.getBeanName();
+        this.methodName = job.getMethodName();
+        this.params = job.getMethodParams();
+        this.jobId=job.getJobId();
+        this.job=job;
+    }
     @Override
     public void run() {
 
@@ -53,14 +66,14 @@ public class SchedulingRunnable implements Runnable {
 
             Method method = null;
             if (StringUtils.isNotEmpty(params)) {
-                method = target.getClass().getDeclaredMethod(methodName, String.class,String.class);
+                method = target.getClass().getDeclaredMethod(methodName, SysJob.class);
             } else {
                 method = target.getClass().getDeclaredMethod(methodName);
             }
 
             ReflectionUtils.makeAccessible(method);
-            if (StringUtils.isNotEmpty(params)) {
-                method.invoke(target, params,this.jobId);
+            if (!Objects.isNull(this.job)) {
+                method.invoke(target, this.job);
             } else {
                 method.invoke(target);
             }

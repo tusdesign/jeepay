@@ -20,8 +20,7 @@ public class TimeUtil {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         System.out.println("当前星期(日期)：" + format.format(calendar.getTime()));
-        calendar.add(Calendar.DAY_OF_WEEK, 0);
-        calendar.set(Calendar.DAY_OF_WEEK, 1);
+        calendar.add(Calendar.DATE,   -1);
         calendar.set(Calendar.HOUR_OF_DAY, 00);//将小时至00
         calendar.set(Calendar.MINUTE, 00);//将分钟至00
         calendar.set(Calendar.SECOND, 00);//将秒至00
@@ -36,6 +35,7 @@ public class TimeUtil {
     public static String getBeforeLastDayDate() throws Exception {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
+        calendar.add(Calendar.DATE,   -1);
         calendar.set(Calendar.HOUR_OF_DAY, 23);//将小时至23
         calendar.set(Calendar.MINUTE, 59);//将分钟至59
         calendar.set(Calendar.SECOND, 59); //将秒至59

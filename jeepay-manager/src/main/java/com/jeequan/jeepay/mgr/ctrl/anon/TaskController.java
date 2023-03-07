@@ -60,7 +60,8 @@ public class TaskController {
         sysJob.setJobStatus(SysJob.NORMAL);
         sysJob.setMethodName("process");
         sysJob.setMethodParams(String.valueOf(EnumTime.TIMETYPE.get(job.getCronType()).key));
-
+        sysJob.setTimeStart(job.getTimeStart());
+        sysJob.setTimeEnd(job.getTimeEnd());
 
         if (job.getTaskType() == 1) sysJob.setBeanName(COMPANYJOB);
         if (job.getTaskType() == 2) sysJob.setBeanName(MERCHANTJOB);
@@ -72,7 +73,7 @@ public class TaskController {
             return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "执行失败");
         else {
             if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob.getBeanName(), sysJob.getMethodName(), sysJob.getMethodParams(), sysJob.getJobId());
+                SchedulingRunnable task = new SchedulingRunnable(sysJob) ;
                 cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
             }
         }

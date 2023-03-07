@@ -20,6 +20,8 @@ import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.core.beans.RequestKitBean;
 import com.jeequan.jeepay.core.constants.CS;
+import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.entity.SysJob;
 import com.jeequan.jeepay.core.entity.SysJobLog;
 import com.jeequan.jeepay.core.entity.SysLog;
 import com.jeequan.jeepay.core.exception.BizException;
@@ -79,6 +81,7 @@ public class JobLogAop {
 
     /**
      * 切面
+     *
      * @param point
      * @return
      * @throws Throwable
@@ -90,20 +93,23 @@ public class JobLogAop {
         jobLog.setCreateTime(new Date());
         jobLog.setExectueStartTime(new Date());
 
-        Object result = point.proceed();
+        Object result;
 
         try {
-            result=point.proceed();
-            // 基础日志信息
-            setJobLogInfo(point, jobLog);
-            scheduledThreadPool.execute(() -> sysJobLogService.save(jobLog));
+
+            result = point.proceed();
+            setJobLogInfo(point, jobLog);// 基础日志信息
+            return result;
         } catch (Exception e) {
-            jobLog.setRemark("methodLogError："+ e.getMessage());
-            logger.error("methodLogError", e);
-        }finally {
-           // scheduledThreadPool.execute(() -> sysJobLogService.save(jobLog));
+
+            setJobLogInfo(point, jobLog);
+            jobLog.setRemark("执行异常：" + e.getMessage());
+            jobLog.setExectueResult("N");
+            logger.error("执行异常", e);
+        } finally {
+            scheduledThreadPool.execute(() -> sysJobLogService.save(jobLog));
         }
-        return result;
+        return null;
     }
 
     /**
@@ -114,8 +120,9 @@ public class JobLogAop {
 
         final SysJobLog jobLog = new SysJobLog();
         setJobLogInfo(joinPoint, jobLog);
-        jobLog.setRemark(e instanceof BizException ? e.getMessage() : "请求异常");
+        jobLog.setRemark("执行异常:" + e.getMessage());
         jobLog.setExectueResult("N");
+
         scheduledThreadPool.execute(() -> sysJobLogService.save(jobLog));
     }
 
@@ -131,8 +138,9 @@ public class JobLogAop {
 
         ReflectionUtils.makeAccessible(method);
 
-        Object [] objects= joinPoint.getArgs();
-        jobLog.setJobId(objects[1].toString());
+        Object[] objects = joinPoint.getArgs();
+        SysJob job = (SysJob) objects[0];
+        jobLog.setJobId(job.getJobId());
 
         //        Field jobIdField = methodSignature.getClass().getDeclaredField("jobId");
         //        String jobId = String.valueOf(jobIdField.get(joinPoint.getThis()));
@@ -142,7 +150,7 @@ public class JobLogAop {
         //        String beanName = String.valueOf(beanField.get(joinPoint.getThis()));
 
         Action methodCache = method.getAnnotation(Action.class);
-        jobLog.setRemark(methodCache != null ? String.format("任务id:%s,任务名称：%s 执行成功",jobLog.getJobId(),methodCache.value()):"");
+        jobLog.setRemark(methodCache != null ? String.format("任务id:%s, 任务名称:%s执行成功", jobLog.getJobId(), methodCache.value()) : "");
         jobLog.setExectueEndTime(new Date());
         jobLog.setExectueResult("Y");
     }

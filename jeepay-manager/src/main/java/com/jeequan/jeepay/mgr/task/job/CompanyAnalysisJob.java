@@ -5,6 +5,8 @@ import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.cache.RedisUtil;
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
+import com.jeequan.jeepay.core.entity.SysJob;
+import com.jeequan.jeepay.mgr.rqrs.JobRQ;
 import com.jeequan.jeepay.service.impl.OrderStatisticsCompanyService;
 import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
@@ -21,8 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
-import java.text.MessageFormat;
+import java.text.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +41,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
     @Value(value = "${qiDi.gateWay.secret-key}")
     private String secretKey;
 
-    @Resource
+    @Resource(name = "customRestTemplate")
     private RestTemplate restTemplate;
 
     @Autowired
@@ -57,16 +60,23 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
     /**
      * 根据周期段进行分析
      *
-     * @param period 1表示天，2表示周 ，3表示月 4表示年
+     * @param job 1表示天，2表示周 ，3表示月 4表示年
      */
     //@Async
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Action("企业账单报表分析")
-    public void process(String period,String jobId) throws Exception {
+    public void process(SysJob job) throws Exception {
 
-        MutablePair<String, String> timePair = this.getPeriod(period);//时间段
-        Long analyseId = System.currentTimeMillis(); //产生版本号
+        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+        //时间段
+        MutablePair<String, String> timePair = this.getPeriod(job.getMethodParams()
+                , dateFormat.format(job.getTimeStart())
+                , dateFormat.format(job.getTimeEnd()));
+
+        //产生版本号
+        Long analyseId = System.currentTimeMillis();
 
         List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
 
@@ -78,7 +88,9 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
                 item.setCompanyName(mutablePair.left);
                 item.setAnalyseId(analyseId);
             });
+
             boolean stepOne = orderStatisticsDeptService.saveBatch(orderStatisticsDeptList, 200);
+
             if (stepOne) {
                 Map<OrderStatisticsCompany, Double> map = orderStatisticsDeptList.stream().collect(Collectors.groupingBy((item) -> {
                     OrderStatisticsCompany company = new OrderStatisticsCompany();
@@ -111,7 +123,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
      * @param deptId
      * @return MutablePair<String, Object>
      */
-    @SneakyThrows
+    @SneakyThrows()
     private MutablePair<String, String> getDept(String deptId) {
 
         String[] nameArray;
@@ -119,7 +131,6 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
         //先去缓存中查一下
         String organization = RedisUtil.getString(deptId);
         if (organization == null || organization.isEmpty()) {
-            RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.add("X-API-KEY", secretKey);
             headers.setContentType(MediaType.APPLICATION_JSON);

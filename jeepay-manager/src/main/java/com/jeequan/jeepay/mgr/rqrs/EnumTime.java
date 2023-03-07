@@ -7,7 +7,8 @@ public class EnumTime {
         DAY("day", 1),
         WEEK("week", 2),
         MONTH("month", 3),
-        YEAR("year", 4);
+        YEAR("year", 4),
+        OTHER("other", 5);
 
         public String key;
         public int value;
@@ -24,7 +25,7 @@ public class EnumTime {
                     return object;
                 }
             }
-            return null;
+            return DAY;
         }
     }
 }
