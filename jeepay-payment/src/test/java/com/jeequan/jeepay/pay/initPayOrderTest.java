@@ -41,21 +41,45 @@ public class initPayOrderTest {
 
 
     @Test
+    public void testRand(){
+
+        String [] detps=new String[]{
+                "ee211e16-a63e-46c2-a85c-3fcab4493751"
+                ,"b874f790-3f55-43ce-900a-5bebddae94d8"
+                ,"55770282-8b40-41b0-aa8d-de49b1317853"
+                ,"08c1a46d-db52-4556-a854-f3bc7ab836ca"};
+
+        //int rands=new Random().nextInt(4);
+        for(int i=0;i<100;i++){
+            int rands=new Random().nextInt(4);
+            System.out.println(detps[rands]);
+        }
+    }
+
+    @Test
     public void testPayApi() {
 
         // 请求地址
-        String url = "http://localhost:9216/api/pay/unifiedOrder";
+        String url = "http://10.10.10.10:9216/api/pay/unifiedOrder";
         String API_SIGN_NAME = "sign";
         RestTemplate restTemplate = new RestTemplate();
-        List<MchApp> mchAppList = mchAppService.list();
+        String [] apps=new String[]{"63b79db7e4b05255970d6f36","63e601b9e4b05255970d6f37"};
+        String [] detps=new String[]{
+                "ee211e16-a63e-46c2-a85c-3fcab4493751"
+                ,"b874f790-3f55-43ce-900a-5bebddae94d8"
+                ,"55770282-8b40-41b0-aa8d-de49b1317853"
+                ,"08c1a46d-db52-4556-a854-f3bc7ab836ca"};
+
+        List<MchApp> mchAppList = mchAppService.list(MchApp.gw().in(MchApp::getAppId,apps));
         mchAppList.forEach(item -> {
 
             String appId = item.getAppId();
             String mchNo = item.getMchNo();
             String apiKey = item.getAppSecret();
 
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 50000; i++) {
 
+                int rands=new Random().nextInt(4);
                 HttpHeaders headers = new HttpHeaders();
                 headers.add("X-API-KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3R1eG0uYXJ0IiwidXNlcm5hbWUiOiJ0dXNkZXNpZ24ifQ.0SCNQBLp6_e3EEcQcT0Rqwp1QJ4AonY5eoOTiKMIkk0");
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -73,7 +97,7 @@ public class initPayOrderTest {
                 Map<String,String> map=new HashMap<String,String>(){
                     {
                         put("businessId","p" + IdWorker.getIdStr());
-                        put("deptId","p" + IdWorker.getIdStr());
+                        put("deptId", detps[rands]);
                         put("dealType","DEPARTMENTAL");
                         put("pid", "m" + IdWorker.getIdStr());
                     }

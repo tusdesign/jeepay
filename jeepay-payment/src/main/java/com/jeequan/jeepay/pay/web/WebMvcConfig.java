@@ -25,12 +25,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         return registrationBean;
     }
 
-    @Bean
-    public RefundInterceptor myInterceptor(){
-        return new RefundInterceptor();
-    }
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(myInterceptor()).addPathPatterns("/api/refund/refundOrder");
-    }
+//    @Bean
+//    public RefundInterceptor myInterceptor(){
+//        return new RefundInterceptor();
+//    }
+//
+//    @Override
+//    public void addInterceptors(InterceptorRegistry registry) {
+//        registry.addInterceptor(myInterceptor()).addPathPatterns("/api/refund/refundOrder");
+//    }
 }
