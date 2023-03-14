@@ -33,6 +33,13 @@ public class PayOrderExtend implements Serializable {
      */
     private String payOrderId;
 
+
+    /**
+     * 标识位：费用类型
+     */
+    @TableField("ext_type")
+    private String extType;
+
     /**
      * 人员Id
      */

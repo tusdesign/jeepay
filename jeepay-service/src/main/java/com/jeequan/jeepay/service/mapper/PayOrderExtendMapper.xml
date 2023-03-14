@@ -11,6 +11,7 @@
         <result column="deptId" property="deptId" />
         <result column="account_state" property="accountState" />
         <result column="created_at" property="createdAt" />
+        <result column="ext_type" property="extType" />
     </resultMap>
 
     <!-- 更新订单退款金额和次数 -->
