@@ -10,7 +10,7 @@ import java.util.Map;
 public class AccountRQ {
 
     @Data
-    private static class DepartMentAccountRQ {
+    public static class DepartMentAccountRQ {
 
         private String deptName;//部门
         private String levelName;//部门等级，是集团还是子部门
