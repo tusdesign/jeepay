@@ -15,8 +15,10 @@
         <artifactId>jeepay</artifactId>
         <version>Final</version>
     </parent>
+
     <!-- 项目依赖声明 -->
     <dependencies>
+
 
         <!-- 依赖[ service ]包, 会自动传递依赖[ core ]包。  -->
         <dependency>
@@ -24,6 +26,11 @@
             <artifactId>jeepay-service</artifactId>
         </dependency>
 
+        <!-- freemarker -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-freemarker</artifactId>
+        </dependency>
         <!-- 依赖[ oss ]包  -->
         <dependency>
             <groupId>com.jeequan</groupId>
@@ -80,12 +87,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
-        </dependency>
-
-        <!-- freemarker -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-freemarker</artifactId>
         </dependency>
 
         <!-- 添加redis支持 -->

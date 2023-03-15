@@ -10,16 +10,20 @@
         <result column="app_id" property="appId" />
         <result column="app_name" property="appName" />
         <result column="mch_name" property="mchName" />
+        <result column="parent_id" property="parentId" />
+        <result column="parent_name" property="parentName" />
+        <result column="dept_id" property="deptId" />
         <result column="dept_name" property="deptName" />
+        <result column="ext_type" property="extType" />
         <result column="amount" property="amount" />
         <result column="created_at" property="createdAt" />
     </resultMap>
 
     <!-- 批量新增 -->
     <insert id="insertBatch">
-        INSERT INTO t_order_statistics_dept (analyse_id, mch_no, app_id, app_name, mch_name,dept_name,amount) VALUES
+        INSERT INTO t_order_statistics_dept (analyse_id, mch_no, app_id, app_name, mch_name,parent_id,parent_name,dept_id,dept_name,ext_type,amount) VALUES
         <foreach collection="list" separator="," item="item">
-            (#{item.analyseId},#{item.mchNo},#{item.appId},#{item.appName},#{item.mchName},#{item.deptName},#{item.amount})
+            (#{item.analyseId},#{item.mchNo},#{item.appId},#{item.appName},#{item.mchName},#{item.parentId},#{item.parentName},#{item.deptId},#{item.deptName},#{item.extType},#{item.amount})
         </foreach>
     </insert>
 

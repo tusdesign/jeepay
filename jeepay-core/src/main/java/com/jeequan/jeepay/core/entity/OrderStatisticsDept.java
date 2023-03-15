@@ -67,15 +67,23 @@ public class OrderStatisticsDept implements Serializable {
     /**
      * 公司名称
      */
-    @TableField(exist=false)
-    private String companyName;
+    private String parentName;
 
     /**
      * 部门id
      */
-    @TableField(exist=false)
     private String deptId;
 
+    /**
+     * 上级部门id
+     */
+    private String parentId;
+
+    /**
+     * 标识位：费用类型
+     */
+    @TableField("ext_type")
+    private String extType;
 
     /**
      * 部门账单金额,单位分
