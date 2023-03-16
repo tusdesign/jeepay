@@ -13,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,26 +32,54 @@ public class ReportingService {
      * @param month 月份
      * @return List<AccountRQ>
      */
-    public List<AccountRQ> getAccountList(int month, long currentTime) {
+    public List<AccountRQ> getAccountList(int month) {
 
         List<AccountRQ> accountRQList = new ArrayList<>();
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 00:00:00");
-        Date date = new Date(currentTime);
-        String timeRange = formatter.format(date);
+        LocalDate ldt = LocalDate.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime dateStart = LocalDateTime.of(ldt.getYear(), month, 1, 0, 0, 0);
+        LocalDateTime dateEnd = LocalDateTime.of(ldt.getYear(), month, getDaysByYearMonth(ldt.getYear(),month), 23, 59, 59);
 
         QueryWrapper<OrderStatisticsDept> queryWrapper = new QueryWrapper<>();
-        queryWrapper.ge(currentTime > 0, "created_at", timeRange);
+        queryWrapper.between("created_at", dtf.format(dateStart),dateEnd);
         queryWrapper.eq(month > 0, "MONTH(FROM_UNIXTIME(analyse_id/1000))", month);
         List<OrderStatisticsDept> orderStatisticsDeptList = statisticsDeptService.list(queryWrapper);
 
-        List<OrderStatisticsDept> distinctStatisticsDeptList = orderStatisticsDeptList.stream()
-                .sorted(Comparator.comparing(OrderStatisticsDept::getAnalyseId).reversed())
-                .collect(Collectors.collectingAndThen(Collectors.toCollection(() ->
-                        new TreeSet<>(Comparator.comparing(OrderStatisticsDept::getAnalyseId))), ArrayList::new));
+        Map<OrderStatisticsDept, List<OrderStatisticsDept>> orderDepatListMap =
+                orderStatisticsDeptList.stream()
+                        .sorted(Comparator.comparing(OrderStatisticsDept::getAnalyseId).reversed())
+                        .collect(Collectors.groupingBy((item) -> {
+                            OrderStatisticsDept dept = new OrderStatisticsDept();
+                            dept.setDeptName(item.getDeptName());
+                            dept.setDeptId(item.getDeptId());
+                            dept.setParentId(item.getParentId());
+                            dept.setAppId(item.getAppId());
+                            dept.setAppName(item.getAppName());
+                            dept.setMchName(item.getMchName());
+                            dept.setMchNo(item.getMchNo());
+                            return dept;
+                        }));
 
-        Map<String, List<OrderStatisticsDept>> companyMap = distinctStatisticsDeptList.stream()
+        List<OrderStatisticsDept> orderDeptList = new ArrayList<>();
+        orderDepatListMap.entrySet().forEach(item -> {
+            OrderStatisticsDept dept = new OrderStatisticsDept();
+            dept.setDeptName(item.getKey().getDeptName());
+            dept.setDeptId(item.getKey().getDeptId());
+            dept.setParentId(item.getKey().getParentId());
+            dept.setAppId(item.getKey().getAppId());
+            dept.setAppName(item.getKey().getAppName());
+            dept.setMchName(item.getKey().getMchName());
+            dept.setMchNo(item.getKey().getMchNo());
+            dept.setAnalyseId(item.getValue().stream().findFirst().get().getAnalyseId());
+            dept.setAmount(item.getValue().stream().findFirst().get().getAmount());
+            dept.setParentName(item.getValue().stream().findFirst().get().getParentName());
+            orderDeptList.add(dept);
+        });
+
+        Map<String, List<OrderStatisticsDept>> companyMap = orderDeptList.stream()
                 .collect(Collectors.groupingBy(OrderStatisticsDept::getParentName));
+
 
         companyMap.entrySet().forEach(entry -> {
                     AccountRQ accountRQ = new AccountRQ();
@@ -110,4 +141,13 @@ public class ReportingService {
         return accountRQList;
     }
 
+    private int getDaysByYearMonth(int year, int month) {
+        Calendar a = Calendar.getInstance();
+        a.set(Calendar.YEAR, year);
+        a.set(Calendar.MONTH, month - 1);
+        a.set(Calendar.DATE, 1);
+        a.roll(Calendar.DATE, -1);
+        int maxDate = a.get(Calendar.DATE);
+        return maxDate;
+    }
 }
