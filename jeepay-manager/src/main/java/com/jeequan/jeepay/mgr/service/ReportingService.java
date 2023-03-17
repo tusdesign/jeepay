@@ -39,10 +39,10 @@ public class ReportingService {
         LocalDate ldt = LocalDate.now();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime dateStart = LocalDateTime.of(ldt.getYear(), month, 1, 0, 0, 0);
-        LocalDateTime dateEnd = LocalDateTime.of(ldt.getYear(), month, getDaysByYearMonth(ldt.getYear(),month), 23, 59, 59);
+        LocalDateTime dateEnd = LocalDateTime.of(ldt.getYear(), month, getDaysByYearMonth(ldt.getYear(), month), 23, 59, 59);
 
         QueryWrapper<OrderStatisticsDept> queryWrapper = new QueryWrapper<>();
-        queryWrapper.between("created_at", dtf.format(dateStart),dateEnd);
+        queryWrapper.between("created_at", dtf.format(dateStart), dateEnd);
         queryWrapper.eq(month > 0, "MONTH(FROM_UNIXTIME(analyse_id/1000))", month);
         List<OrderStatisticsDept> orderStatisticsDeptList = statisticsDeptService.list(queryWrapper);
 
@@ -74,6 +74,7 @@ public class ReportingService {
             dept.setAnalyseId(item.getValue().stream().findFirst().get().getAnalyseId());
             dept.setAmount(item.getValue().stream().findFirst().get().getAmount());
             dept.setParentName(item.getValue().stream().findFirst().get().getParentName());
+            dept.setExtType(item.getValue().stream().findFirst().get().getExtType());
             orderDeptList.add(dept);
         });
 

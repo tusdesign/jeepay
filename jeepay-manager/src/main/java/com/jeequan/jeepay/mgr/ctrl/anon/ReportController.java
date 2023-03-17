@@ -3,8 +3,11 @@ package com.jeequan.jeepay.mgr.ctrl.anon;
 import cn.hutool.core.date.DateTime;
 import com.jeequan.jeepay.mgr.rqrs.AccountRQ;
 import com.jeequan.jeepay.mgr.service.ReportingService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,6 +21,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+/*
+ * 报表下载
+ *
+ * @author czw
+ * @site https://www.jeequan.com
+ * @date 2023/03/17 17:09
+ */
 @Controller
 @RequestMapping("/api/anon/excel")
 public class ReportController {
@@ -25,15 +35,15 @@ public class ReportController {
     @Autowired
     private ReportingService reportingService;
 
-    @RequestMapping(value="/export/{month}",method = RequestMethod.GET)
-    public void export(HttpServletResponse response,@PathVariable int month) throws Exception {
+    @RequestMapping(value = "/export/{month}", method = RequestMethod.GET)
+    public void export(HttpServletResponse response, @PathVariable int month) throws Exception {
 
-        List<AccountRQ> accountRQList= reportingService.getAccountList(month);
+        List<AccountRQ> accountRQList = reportingService.getAccountList(month);
         Workbook workbook = new XSSFWorkbook();
 
-        accountRQList.forEach(item->{
+        accountRQList.forEach(item -> {
 
-            Sheet sheet = workbook.createSheet( "账单统计"+System.currentTimeMillis());
+            Sheet sheet = workbook.createSheet("账单-" + (StringUtils.isEmpty(item.getCompanyName()) ? "未知" : item.getCompanyName()));
 
             for (int i = 0; i < 4; i++) {
                 if (i == 0) {
@@ -46,10 +56,11 @@ public class ReportController {
             CellRangeAddress range_1 = new CellRangeAddress(0, 0, 0, 3);
             sheet.addMergedRegion(range_1);
 
-            int rowIndex=0;
+            int rowIndex = 0;
             Row row = sheet.createRow(rowIndex++);
             Cell cell = row.createCell(0);
-            cell.setCellValue(String.format("久旺物业入驻企业%s月度账单",month));
+            cell.setCellValue(String.format("久旺物业入驻企业%s月度账单", month));
+            cell.setCellStyle(getStyle(false, 2, workbook));
 
             CellRangeAddress range_2 = new CellRangeAddress(1, 1, 1, 3);
             sheet.addMergedRegion(range_2);
@@ -62,46 +73,68 @@ public class ReportController {
             cell1.setCellValue("企业");
             Cell cell2 = row1.createCell(1);
             cell2.setCellValue(item.getCompanyName());
+            cell2.setCellStyle(getStyle(false, 0, workbook));
 
             Row row2 = sheet.createRow(rowIndex++);
             Cell cell3 = row2.createCell(0);
             cell3.setCellValue("总账");
+            cell2.setCellStyle(getStyle(false, 0, workbook));
+
             Cell cell4 = row2.createCell(1);
             cell4.setCellValue(item.getTotalAccountForCompany());
+            cell2.setCellStyle(getStyle(false, -1, workbook));
+
+            CellStyle cellStylex = setDefaultStyle2(workbook);
+            setRegionStyle(sheet, range_2, cellStylex);
+
+            CellStyle cellStyley = setDefaultStyle2(workbook);
+            setRegionStyle(sheet, range_3, cellStyley);
 
             CellRangeAddress range_4 = new CellRangeAddress(3, 3, 0, 3);
             sheet.addMergedRegion(range_4);
             Row range_4_row = sheet.createRow(rowIndex++);
             Cell range_4_cell = range_4_row.createCell(0);
-            range_4_cell.setCellValue("货币:人民币 单位：元");
+            range_4_cell.setCellValue("货币形式：CNY   单位：元");
+            range_4_cell.setCellStyle(getStyle(false, 0, workbook));
 
-            for(AccountRQ.DepartMentAccountRQ rq : item.getDepartMentAccountRQList()){
+            CellStyle cellStyle = setDefaultStyle(workbook);
+            setRegionStyle(sheet, range_4, cellStyle);
 
-                int r=rowIndex++;
-                CellRangeAddress range = new CellRangeAddress(r, r, 0, 3);
-                sheet.addMergedRegion(range);
+            for (AccountRQ.DepartMentAccountRQ rq : item.getDepartMentAccountRQList()) {
+
+                int r = rowIndex++;
 
                 Row for_row = sheet.createRow(r);
                 Cell for_cell = for_row.createCell(0);
-                for_cell.setCellValue(rq.getDeptName()+"："+rq.getTotalAccountForDept());
+                for_cell.setCellValue(rq.getDeptName() + "：" +String.format("%.2f", rq.getTotalAccountForDept()));
+                for_cell.setCellStyle(getStyle(false, 2, workbook));
 
-                for(String key : rq.getAccountDetail().keySet()){
+                CellRangeAddress range = new CellRangeAddress(r, r, 0, 3);
+                sheet.addMergedRegion(range);
+
+                for (String key : rq.getAccountDetail().keySet()) {
                     Double value = rq.getAccountDetail().get(key);
 
                     Row app_row = sheet.createRow(rowIndex++);
 
-                    Cell acell= app_row.createCell(0);
+                    Cell acell = app_row.createCell(0);
                     acell.setCellValue("费用类别");
+                    acell.setCellStyle(getStyle(true, 0, workbook));
 
-                    Cell key_cell= app_row.createCell(2);
+                    Cell key_cell = app_row.createCell(2);
                     key_cell.setCellValue(key);
+                    key_cell.setCellStyle(getStyle(false, 0, workbook));
 
-                    Cell value_cell= app_row.createCell(3);
-                    value_cell.setCellValue(value);
+                    Cell value_cell = app_row.createCell(3);
+                    value_cell.setCellValue(value.doubleValue());
+                    value_cell.setCellStyle(getStyle(false, -1, workbook));
                 }
 
-                CellRangeAddress range_type = new CellRangeAddress(r+1, rq.getAccountDetail().size()+r, 0, 1);
+                CellRangeAddress range_type = new CellRangeAddress(r + 1, rq.getAccountDetail().size() + r, 0, 1);
                 sheet.addMergedRegion(range_type);
+
+                CellStyle cellStylen = setDefaultStyle2(workbook);
+                setRegionStyle(sheet, range_type, cellStylen);
             }
 
         });
@@ -117,7 +150,6 @@ public class ReportController {
         out.flush();
         out.close();
     }
-
 
     private CellStyle getStyle(boolean isLeft, int styleIndex, Workbook book) {
         CellStyle style = book.createCellStyle();
@@ -143,10 +175,63 @@ public class ReportController {
             style.setFillForegroundColor(IndexedColors.CORAL.getIndex());
             style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         }
+
+        if (styleIndex == -1) {
+            //style.setDataFormat(book.createDataFormat().getFormat("##.##"));
+            style.setDataFormat(book.createDataFormat().getFormat("0.00"));
+        }
+
+        style.setBorderBottom(BorderStyle.THIN); //下边框
+        style.setBorderLeft(BorderStyle.THIN);//左边框
+        style.setBorderTop(BorderStyle.THIN);//上边框
+        style.setBorderRight(BorderStyle.THIN);//右边框
+
         Font font = book.createFont();
-        font.setFontName("宋体");
+        font.setFontName("新宋体");
         font.setFontHeightInPoints((short) 12);//设置字体大小
         style.setFont(font);
         return style;
+    }
+
+
+    /**
+     * 为合并的单元格设置样式（可根据需要自行调整）
+     */
+    @SuppressWarnings("deprecation")
+    public void setRegionStyle(Sheet sheet, CellRangeAddress region, CellStyle cs) {
+        for (int i = region.getFirstRow(); i <= region.getLastRow(); i++) {
+            Row row = sheet.getRow(i);
+            if (null == row) row = sheet.createRow(i);
+            for (int j = region.getFirstColumn(); j <= region.getLastColumn(); j++) {
+                Cell cell = row.getCell(j);
+                if (null == cell) cell = row.createCell(j);
+                cell.setCellStyle(cs);
+            }
+        }
+    }
+
+    /**
+     * 带边框的样式+
+     */
+    public CellStyle setDefaultStyle(Workbook workbook) {
+        CellStyle cellStyle = workbook.createCellStyle();
+        // 边框
+        cellStyle.setBorderBottom(BorderStyle.THIN);
+        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderRight(BorderStyle.THIN);
+        cellStyle.setBorderTop(BorderStyle.THIN);
+        return cellStyle;
+    }
+
+    public CellStyle setDefaultStyle2(Workbook workbook) {
+        CellStyle cellStyle = workbook.createCellStyle();
+        cellStyle.setAlignment(HorizontalAlignment.CENTER);
+        cellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // 边框
+        cellStyle.setBorderBottom(BorderStyle.THIN);
+        cellStyle.setBorderLeft(BorderStyle.THIN);
+        cellStyle.setBorderRight(BorderStyle.THIN);
+        cellStyle.setBorderTop(BorderStyle.THIN);
+        return cellStyle;
     }
 }
