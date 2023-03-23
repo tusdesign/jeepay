@@ -516,25 +516,28 @@ CREATE TABLE `t_order_statistics_company` (
   KEY `created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='企业账单分析表';
 
-
 --
 -- 部门账单分析表 `t_order_statistics_dept`
 --
-
-DROP TABLE IF EXISTS `t_order_statistics_dept`;
 CREATE TABLE `t_order_statistics_dept` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT 'ID',
-  `analyse_id` bigint NOT NULL COMMENT '企业分析表标识符',
+  `analyse_id` bigint NOT NULL COMMENT '主表分析标识符',
   `mch_no` varchar(64) NOT NULL COMMENT '商户号',
   `app_id` varchar(64) NOT NULL COMMENT '应用ID',
   `app_name` varchar(64) NOT NULL COMMENT '应用名称',
   `mch_name` varchar(30) NOT NULL COMMENT '商户名称',
+  `parent_id` varchar(50) DEFAULT '',COMMENT '部门父id',
+  `parent_name` varchar(100) DEFAULT '' COMMENT '公司名称',
+  `dept_id` varchar(50) DEFAULT '',COMMENT '部门id',
   `dept_name` varchar(100) NOT NULL COMMENT '部门名称',
-  `amount` decimal(10,2) NOT NULL DEFAULT '0.00' COMMENT '部门账单金额,单位分',
+  `ext_type` varchar(30) DEFAULT '' COMMENT '费用标识位',
+  `amount` decimal(10,2) NOT NULL COMMENT '部门账单金额,单位分',
   `created_at` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) COMMENT '创建时间',
+  `remark` varchar(512) DEFAULT '' COMMENT '备注',
   PRIMARY KEY (`id`),
   KEY `created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='部门账单分析表';
+) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='订单分析部门表'
+
 
 
 --

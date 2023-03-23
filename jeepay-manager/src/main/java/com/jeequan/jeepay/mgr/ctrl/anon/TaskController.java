@@ -36,6 +36,9 @@ public class TaskController {
     //商户账单job
     private final String MERCHANTJOB = "merchatAnalysisJob";
 
+    //testjob
+    private final String TESTJOB = "orderJob";
+
     @Autowired
     private SysJobService sysJobService;
 
@@ -51,7 +54,7 @@ public class TaskController {
         if (StringUtils.isEmpty(job.getCronType())) {
             return ApiRes.fail(ApiCodeEnum.PARAMS_ERROR, "任务周期不能为空");
         }
-        if (Arrays.asList(1, 2).contains(job.getTaskType())) {
+        if (Arrays.asList(1, 2, 3).contains(job.getTaskType())) {
             return ApiRes.fail(ApiCodeEnum.PARAMS_ERROR, "任务类型不存在");
         }
 
@@ -65,10 +68,14 @@ public class TaskController {
 
         if (job.getTaskType() == 1) sysJob.setBeanName(COMPANYJOB);
         if (job.getTaskType() == 2) sysJob.setBeanName(MERCHANTJOB);
+        if (job.getTaskType() == 3) sysJob.setBeanName(TESTJOB);
 
         if (StringUtils.isEmpty(job.getCronExpression())) {
             sysJob.setCronExpression("0 0 * * * *");
+        }else{
+            sysJob.setCronExpression(job.getCronExpression());
         }
+
         if (!sysJobService.save(sysJob))
             return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "执行失败");
         else {
@@ -79,4 +86,7 @@ public class TaskController {
         }
         return ApiRes.ok(job);
     }
+
+
+
 }

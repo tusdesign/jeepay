@@ -78,25 +78,24 @@ public class ReportingService {
             orderDeptList.add(dept);
         });
 
-        Map<String, List<OrderStatisticsDept>> companyMap = orderDeptList.stream()
+        Map<String, List<OrderStatisticsDept>> companyMap = orderDeptList.stream().distinct()
                 .collect(Collectors.groupingBy(OrderStatisticsDept::getParentName));
 
 
         companyMap.entrySet().forEach(entry -> {
+
                     AccountRQ accountRQ = new AccountRQ();
                     accountRQ.setCompanyName(entry.getKey());
                     accountRQ.setTotalAccountForCompany(entry.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
                     accountRQ.setDepartMentAccountRQList(new ArrayList<AccountRQ.DepartMentAccountRQ>());
 
-
                     Map<OrderStatisticsDept, Double> map1 = entry.getValue().stream().collect(Collectors.groupingBy((item) -> {
                         OrderStatisticsDept statisticsDept = new OrderStatisticsDept();
                         statisticsDept.setAppName(item.getAppName());
                         statisticsDept.setMchName(item.getMchName());
-                        statisticsDept.setParentName(item.getParentName());
+                        statisticsDept.setParentName(item.getParentName());//公司或集团名称
                         return statisticsDept;
                     }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
-
 
                     Map<String, Double> accountDetail = new HashMap<>();
                     map1.entrySet().forEach(entry1 -> {
