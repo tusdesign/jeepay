@@ -12,6 +12,7 @@ import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
 import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +78,6 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
 
         //产生版本号
         Long analyseId = System.currentTimeMillis();
-
         List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
 
         if (!CollectionUtil.isEmpty(orderStatisticsDeptList)) {
@@ -85,12 +85,12 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
                 //去启迪查询部门信息
                 MutablePair<String, String> mutablePair = getDept(item.getDeptId());
                 item.setDeptName(mutablePair.right);
-                item.setCompanyName(mutablePair.left);
+                item.setParentName(mutablePair.left);
                 item.setAnalyseId(analyseId);
+                item.setParentId(String.valueOf(mutablePair.left.hashCode()));
             });
 
             boolean stepOne = orderStatisticsDeptService.saveBatch(orderStatisticsDeptList, 200);
-
             if (stepOne) {
                 Map<OrderStatisticsCompany, Double> map = orderStatisticsDeptList.stream().collect(Collectors.groupingBy((item) -> {
                     OrderStatisticsCompany company = new OrderStatisticsCompany();
@@ -102,7 +102,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
                     company.setAmountInfact(0D);
                     company.setAnalyseId(analyseId);
                     company.setRemark("企业账单分析");
-                    company.setDeptName(item.getCompanyName());
+                    company.setDeptName(item.getParentName());
                     return company;
                 }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
 
