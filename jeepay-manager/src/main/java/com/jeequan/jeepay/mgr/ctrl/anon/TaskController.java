@@ -1,13 +1,13 @@
 package com.jeequan.jeepay.mgr.ctrl.anon;
 
+import com.alibaba.fastjson.JSONObject;
 import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.core.constants.ApiCodeEnum;
-import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.SysJob;
 import com.jeequan.jeepay.core.exception.BizException;
 import com.jeequan.jeepay.core.model.ApiRes;
-import com.jeequan.jeepay.mgr.rqrs.EnumTime;
-import com.jeequan.jeepay.mgr.rqrs.JobRQ;
+import com.jeequan.jeepay.mgr.util.EnumTime;
+import com.jeequan.jeepay.mgr.rqrs.TaskScheduleRq;
 import com.jeequan.jeepay.mgr.task.CronTaskRegistrar;
 import com.jeequan.jeepay.mgr.task.SchedulingRunnable;
 import com.jeequan.jeepay.service.impl.SysJobService;
@@ -45,26 +45,33 @@ public class TaskController {
     @Autowired
     private CronTaskRegistrar cronTaskRegistrar;
 
-    @RequestMapping(value = "/start", method = RequestMethod.POST)
-    public ApiRes startAtOnce(@RequestBody JobRQ job) throws BizException {
 
-        if (Objects.isNull(job.getTaskType())) {
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
+    public ApiRes startAtOnce(@RequestBody TaskScheduleRq job) throws BizException {
+
+        if (Objects.isNull(job.getTaskType()))
             return ApiRes.fail(ApiCodeEnum.PARAMS_ERROR, "任务类型不能为空");
-        }
-        if (StringUtils.isEmpty(job.getCronType())) {
+        if (StringUtils.isEmpty(job.getCronType()))
             return ApiRes.fail(ApiCodeEnum.PARAMS_ERROR, "任务周期不能为空");
-        }
-        if (Arrays.asList(1, 2, 3).contains(job.getTaskType())) {
+        if (Arrays.asList(1, 2, 3).contains(job.getTaskType()))
             return ApiRes.fail(ApiCodeEnum.PARAMS_ERROR, "任务类型不存在");
-        }
 
         SysJob sysJob = new SysJob();
         sysJob.setJobId(job.getJobId());
         sysJob.setJobStatus(SysJob.NORMAL);
         sysJob.setMethodName("process");
-        sysJob.setMethodParams(String.valueOf(EnumTime.TIMETYPE.get(job.getCronType()).key));
-        sysJob.setTimeStart(job.getTimeStart());
-        sysJob.setTimeEnd(job.getTimeEnd());
+
+        JSONObject object = new JSONObject();
+        object.put("period", String.valueOf(EnumTime.TIMETYPE.get(job.getCronType()).key));
+
+        if (job.getCronType().equals("other")) {
+            if (Objects.isNull(job.getTimeStart()) || Objects.isNull(job.getTimeEnd())) {
+                return ApiRes.fail(ApiCodeEnum.PARAMS_ERROR, "所属订单开始时间或结束时间不能为空");
+            }
+            object.put("timeStart", job.getTimeStart());
+            object.put("timeEnd", job.getTimeEnd());
+        }
+        sysJob.setMethodParams(JSONObject.toJSONString(object));
 
         if (job.getTaskType() == 1) sysJob.setBeanName(COMPANYJOB);
         if (job.getTaskType() == 2) sysJob.setBeanName(MERCHANTJOB);
@@ -72,21 +79,73 @@ public class TaskController {
 
         if (StringUtils.isEmpty(job.getCronExpression())) {
             sysJob.setCronExpression("0 0 * * * *");
-        }else{
+        } else {
             sysJob.setCronExpression(job.getCronExpression());
         }
 
         if (!sysJobService.save(sysJob))
-            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "执行失败");
+            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "新增失败");
         else {
             if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob) ;
+                SchedulingRunnable task = new SchedulingRunnable(sysJob);
                 cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
             }
         }
         return ApiRes.ok(job);
     }
 
+    @RequestMapping(value = "/modify", method = RequestMethod.POST)
+    @MethodLog(remark = "修改任务")
+    public ApiRes taskModify(SysJob sysJob) throws BizException {
+        boolean success = sysJobService.updateById(sysJob);
+        if (!success)
+            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_UPDATE, "修改失败");
+        else {
+            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
+                SchedulingRunnable task = new SchedulingRunnable(sysJob);
+                cronTaskRegistrar.removeCronTask(task);
+            }
+            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
+                SchedulingRunnable task = new SchedulingRunnable(sysJob);
+                cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
+            }
+        }
+        return ApiRes.ok();
+    }
 
+    @RequestMapping(value = "/remove", method = RequestMethod.POST)
+    @MethodLog(remark = "移除任务")
+    public ApiRes taskDelete(SysJob sysJob) throws BizException {
+        boolean success = sysJobService.removeById(sysJob.getJobId());
+        if (!success)
+            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_DELETE, "删除失败");
+        else {
+            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
+                SchedulingRunnable task = new SchedulingRunnable(sysJob);
+                cronTaskRegistrar.removeCronTask(task);
+            }
+        }
+        return ApiRes.ok();
+    }
+
+
+    @RequestMapping(value = "/list", method = RequestMethod.POST)
+    @MethodLog(remark = "列出所有任务")
+    public ApiRes taskList() throws BizException {
+        List<SysJob> sysJobList = sysJobService.list();
+        return ApiRes.ok(sysJobList);
+    }
+
+
+//    @RequestMapping(value = "/operation", method = RequestMethod.POST)
+//    public ApiRes operation(SysJob existedSysJob) {
+//        SchedulingRunnable task = new SchedulingRunnable(existedSysJob);
+//        if (existedSysJob.getJobStatus().equals(SysJob.NORMAL)) {
+//            cronTaskRegistrar.addCronTask(task, existedSysJob.getCronExpression());
+//        } else {
+//            cronTaskRegistrar.removeCronTask(task);
+//        }
+//        return ApiRes.ok();
+//    }
 
 }

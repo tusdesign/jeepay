@@ -1,18 +1,18 @@
 package com.jeequan.jeepay.mgr.task.job;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.cache.RedisUtil;
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
 import com.jeequan.jeepay.core.entity.SysJob;
-import com.jeequan.jeepay.mgr.rqrs.JobRQ;
+import com.jeequan.jeepay.mgr.util.TimeUtil;
 import com.jeequan.jeepay.service.impl.OrderStatisticsCompanyService;
 import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
 import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +25,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.text.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -57,6 +54,8 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
     @Autowired
     private OrderStatisticsDeptService orderStatisticsDeptService;
 
+    @Autowired
+    private TimeUtil timeUtil;
 
     /**
      * 根据周期段进行分析
@@ -71,15 +70,15 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
 
         SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
-        //时间段
-        MutablePair<String, String> timePair = this.getPeriod(job.getMethodParams()
-                , dateFormat.format(job.getTimeStart())
-                , dateFormat.format(job.getTimeEnd()));
+        JSONObject jsonObject= JSONObject.parseObject(job.getMethodParams());
+        MutablePair<String, String> timePair = this.getPeriod(
+                jsonObject.getString("period")
+                , Optional.ofNullable(jsonObject.getString("timeStart")).orElse(TimeUtil.getBeforeFirstDayDate())
+                , Optional.ofNullable(jsonObject.getString("timeEnd")).orElse(TimeUtil.getBeforeLastDayDate()));
 
-        //产生版本号
-        Long analyseId = System.currentTimeMillis();
+        Long analyseId = System.currentTimeMillis();//产生版本号
+
         List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
-
         if (!CollectionUtil.isEmpty(orderStatisticsDeptList)) {
             orderStatisticsDeptList.forEach(item -> {
                 //去启迪查询部门信息

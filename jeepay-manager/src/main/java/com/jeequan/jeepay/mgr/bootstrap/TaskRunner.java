@@ -2,9 +2,7 @@ package com.jeequan.jeepay.mgr.bootstrap;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.jeequan.jeepay.core.entity.MchNotifyRecord;
 import com.jeequan.jeepay.core.entity.SysJob;
-import com.jeequan.jeepay.mgr.rqrs.EnumTime;
 import com.jeequan.jeepay.mgr.task.CronTaskRegistrar;
 import com.jeequan.jeepay.mgr.task.SchedulingRunnable;
 import com.jeequan.jeepay.service.impl.SysJobService;

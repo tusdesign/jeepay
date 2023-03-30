@@ -1,8 +1,6 @@
 package com.jeequan.jeepay.mgr.rqrs;
 
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -12,7 +10,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Data
-public class JobRQ {
+public class TaskScheduleRq {
 
     /**
      * jobId

@@ -1,13 +1,10 @@
 package com.jeequan.jeepay.mgr.ctrl.anon;
 
-import cn.hutool.core.date.DateTime;
-import com.jeequan.jeepay.mgr.rqrs.AccountRQ;
+import com.jeequan.jeepay.mgr.rqrs.AccountForDepartRq;
 import com.jeequan.jeepay.mgr.service.ReportingService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,7 +34,7 @@ public class ReportController {
     @RequestMapping(value = "/export/{month}", method = RequestMethod.GET)
     public void export(HttpServletResponse response, @PathVariable int month) throws Exception {
 
-        List<AccountRQ> accountRQList = reportingService.getAccountList(month);
+        List<AccountForDepartRq> accountRQList = reportingService.getAccountList(month);
         Workbook workbook = new XSSFWorkbook();
 
         accountRQList.forEach(item -> {
@@ -100,7 +96,7 @@ public class ReportController {
             CellStyle cellStyle = setDefaultStyle(workbook);
             setRegionStyle(sheet, range_4, cellStyle);
 
-            for (AccountRQ.DepartMentAccountRQ rq : item.getDepartMentAccountRQList()) {
+            for (AccountForDepartRq.DepartMentAccountRQ rq : item.getDepartMentAccountRQList()) {
 
                 int r = rowIndex++;
 

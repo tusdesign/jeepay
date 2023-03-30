@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class AccountRQ {
+public class AccountForDepartRq {
 
     @Data
     public static class DepartMentAccountRQ {
@@ -23,3 +23,9 @@ public class AccountRQ {
     private List<DepartMentAccountRQ> departMentAccountRQList;//部门消费明细
 
 }
+
+
+
+
+
+

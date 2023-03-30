@@ -1,18 +1,16 @@
 package com.jeequan.jeepay.mgr.service;
 
 
-import com.alibaba.druid.sql.ast.expr.SQLCaseExpr;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
-import com.jeequan.jeepay.mgr.rqrs.AccountRQ;
-import com.jeequan.jeepay.service.impl.OrderStatisticsCompanyService;
+import com.jeequan.jeepay.mgr.rqrs.AccountForDepartRq;
+import com.jeequan.jeepay.mgr.rqrs.AccountForDepartmentRq;
+import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
 import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,9 +30,9 @@ public class ReportingService {
      * @param month 月份
      * @return List<AccountRQ>
      */
-    public List<AccountRQ> getAccountList(int month) {
+    public List<AccountForDepartRq> getAccountList(int month) {
 
-        List<AccountRQ> accountRQList = new ArrayList<>();
+        List<AccountForDepartRq> accountRQList = new ArrayList<>();
 
         LocalDate ldt = LocalDate.now();
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -84,10 +82,10 @@ public class ReportingService {
 
         companyMap.entrySet().forEach(entry -> {
 
-                    AccountRQ accountRQ = new AccountRQ();
+                    AccountForDepartRq accountRQ = new AccountForDepartRq();
                     accountRQ.setCompanyName(entry.getKey());
                     accountRQ.setTotalAccountForCompany(entry.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
-                    accountRQ.setDepartMentAccountRQList(new ArrayList<AccountRQ.DepartMentAccountRQ>());
+                    accountRQ.setDepartMentAccountRQList(new ArrayList<AccountForDepartRq.DepartMentAccountRQ>());
 
                     Map<OrderStatisticsDept, Double> map1 = entry.getValue().stream().collect(Collectors.groupingBy((item) -> {
                         OrderStatisticsDept statisticsDept = new OrderStatisticsDept();
@@ -101,7 +99,7 @@ public class ReportingService {
                     map1.entrySet().forEach(entry1 -> {
                         accountDetail.put(entry1.getKey().getAppName(), entry1.getValue());
                     });
-                    AccountRQ.DepartMentAccountRQ departMentAccountRQ = new AccountRQ.DepartMentAccountRQ();
+                    AccountForDepartRq.DepartMentAccountRQ departMentAccountRQ = new AccountForDepartRq.DepartMentAccountRQ();
                     departMentAccountRQ.setLevelName("集团");
                     departMentAccountRQ.setTotalAccountForDept(accountRQ.getTotalAccountForCompany());
                     departMentAccountRQ.setDeptName("集团");
@@ -115,7 +113,7 @@ public class ReportingService {
                                     , Collectors.summingDouble(OrderStatisticsDept::getAmount)));
 
                     deptMap.entrySet().forEach(item -> {
-                        AccountRQ.DepartMentAccountRQ departMentAccountRQ2 = new AccountRQ.DepartMentAccountRQ();
+                        AccountForDepartRq.DepartMentAccountRQ departMentAccountRQ2 = new AccountForDepartRq.DepartMentAccountRQ();
                         departMentAccountRQ2.setLevelName("部门");
                         departMentAccountRQ2.setTotalAccountForDept(item.getValue());
                         departMentAccountRQ2.setDeptName(item.getKey());
@@ -140,6 +138,103 @@ public class ReportingService {
 
         return accountRQList;
     }
+
+
+
+    /**
+     * 根据月份查找到账单
+     *
+     * @param month 月份
+     * @return List<AccountForTenantRq>
+     */
+    public List<AccountForTenantRq> getAccountForTenants(int month) {
+
+        List<AccountForTenantRq> accountRQList = new ArrayList<>();
+
+        LocalDate ldt = LocalDate.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime dateStart = LocalDateTime.of(ldt.getYear(), month, 1, 0, 0, 0);
+        LocalDateTime dateEnd = LocalDateTime.of(ldt.getYear(), month, getDaysByYearMonth(ldt.getYear(), month), 23, 59, 59);
+
+        QueryWrapper<OrderStatisticsDept> queryWrapper = new QueryWrapper<>();
+        queryWrapper.between("created_at", dtf.format(dateStart), dateEnd);
+        queryWrapper.eq(month > 0, "MONTH(FROM_UNIXTIME(analyse_id/1000))", month);
+        List<OrderStatisticsDept> orderStatisticsDeptList = statisticsDeptService.list(queryWrapper);
+
+        Map<Long, List<OrderStatisticsDept>> orderDepatListMap =
+                orderStatisticsDeptList.stream().collect(Collectors.groupingBy(OrderStatisticsDept::getAnalyseId));
+
+        Set<Long> set = orderDepatListMap.keySet();
+        Object[] obj = set.toArray();
+        Arrays.sort(obj);
+
+        //最新版本的统计数据
+        List<OrderStatisticsDept> orderStatisticsDeptsNews=orderDepatListMap.get(obj[obj.length - 1]);
+
+        //按公司，消费类别两层分组
+        Map<String, Map<String, List<OrderStatisticsDept>>> companyMap = orderStatisticsDeptsNews.stream()
+                .collect(Collectors.groupingBy(OrderStatisticsDept::getParentName,
+                        Collectors.groupingBy(OrderStatisticsDept::getAppName)));
+
+        companyMap.entrySet().forEach(entry -> {
+            AccountForTenantRq accountRQ = new AccountForTenantRq();
+                    accountRQ.setGroupName(entry.getKey());
+                    accountRQ.setTotalAccountForTenant(entry.getValue().values().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
+                    //accountRQ.setTotalAccountForCompany(entry.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
+                    accountRQ.setAccountForDepartmentRqs(new ArrayList<AccountForDepartmentRq>());
+
+                    Map<OrderStatisticsDept, Double> map1 = entry.getValue().stream().collect(Collectors.groupingBy((item) -> {
+                        OrderStatisticsDept statisticsDept = new OrderStatisticsDept();
+                        statisticsDept.setAppName(item.getAppName());
+                        statisticsDept.setMchName(item.getMchName());
+                        statisticsDept.setParentName(item.getParentName());//公司或集团名称
+                        return statisticsDept;
+                    }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
+
+                    Map<String, Double> accountDetail = new HashMap<>();
+                    map1.entrySet().forEach(entry1 -> {
+                        accountDetail.put(entry1.getKey().getAppName(), entry1.getValue());
+                    });
+                    AccountForDepartRq.DepartMentAccountRQ departMentAccountRQ = new AccountForDepartRq.DepartMentAccountRQ();
+                    departMentAccountRQ.setLevelName("集团");
+                    departMentAccountRQ.setTotalAccountForDept(accountRQ.getTotalAccountForCompany());
+                    departMentAccountRQ.setDeptName("集团");
+                    departMentAccountRQ.setAccountDetail(accountDetail);
+
+                    accountRQ.getDepartMentAccountRQList().add(departMentAccountRQ);
+
+                    //部门账
+                    Map<String, Double> deptMap = entry.getValue().stream()
+                            .collect(Collectors.groupingBy(OrderStatisticsDept::getDeptName
+                                    , Collectors.summingDouble(OrderStatisticsDept::getAmount)));
+
+                    deptMap.entrySet().forEach(item -> {
+                        AccountForDepartRq.DepartMentAccountRQ departMentAccountRQ2 = new AccountForDepartRq.DepartMentAccountRQ();
+                        departMentAccountRQ2.setLevelName("部门");
+                        departMentAccountRQ2.setTotalAccountForDept(item.getValue());
+                        departMentAccountRQ2.setDeptName(item.getKey());
+
+                        Map<String, Double> map2 = entry.getValue().stream().filter(el -> el.getDeptName().equals(item.getKey()))
+                                .collect(Collectors.groupingBy(OrderStatisticsDept::getAppName
+                                        , Collectors.summingDouble(OrderStatisticsDept::getAmount)));
+
+                        Map<String, Double> accountDetai2 = new HashMap<>();
+                        map2.entrySet().forEach(entry1 -> {
+                            accountDetai2.put(entry1.getKey(), entry1.getValue());
+                        });
+
+                        departMentAccountRQ2.setAccountDetail(accountDetai2);
+                        accountRQ.getDepartMentAccountRQList().add(departMentAccountRQ2);
+
+                    });
+
+                    accountRQList.add(accountRQ);
+                }
+        );
+
+        return accountRQList;
+    }
+
 
     private int getDaysByYearMonth(int year, int month) {
         Calendar a = Calendar.getInstance();
