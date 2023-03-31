@@ -140,7 +140,6 @@ public class ReportingService {
     }
 
 
-
     /**
      * 根据月份查找到账单
      *
@@ -169,65 +168,49 @@ public class ReportingService {
         Arrays.sort(obj);
 
         //最新版本的统计数据
-        List<OrderStatisticsDept> orderStatisticsDeptsNews=orderDepatListMap.get(obj[obj.length - 1]);
+        List<OrderStatisticsDept> orderStatisticsDeptsNews = orderDepatListMap.get(obj[obj.length - 1]);
 
         //按公司，消费类别两层分组
         Map<String, Map<String, List<OrderStatisticsDept>>> companyMap = orderStatisticsDeptsNews.stream()
                 .collect(Collectors.groupingBy(OrderStatisticsDept::getParentName,
                         Collectors.groupingBy(OrderStatisticsDept::getAppName)));
 
+        //遍历公司列表
         companyMap.entrySet().forEach(entry -> {
-            AccountForTenantRq accountRQ = new AccountForTenantRq();
+                    AccountForTenantRq accountRQ = new AccountForTenantRq();
+
+                    accountRQ.setAccountTime(new Date());
                     accountRQ.setGroupName(entry.getKey());
-                    accountRQ.setTotalAccountForTenant(entry.getValue().values().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
-                    //accountRQ.setTotalAccountForCompany(entry.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
                     accountRQ.setAccountForDepartmentRqs(new ArrayList<AccountForDepartmentRq>());
 
-                    Map<OrderStatisticsDept, Double> map1 = entry.getValue().stream().collect(Collectors.groupingBy((item) -> {
-                        OrderStatisticsDept statisticsDept = new OrderStatisticsDept();
-                        statisticsDept.setAppName(item.getAppName());
-                        statisticsDept.setMchName(item.getMchName());
-                        statisticsDept.setParentName(item.getParentName());//公司或集团名称
-                        return statisticsDept;
-                    }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
-
-                    Map<String, Double> accountDetail = new HashMap<>();
-                    map1.entrySet().forEach(entry1 -> {
-                        accountDetail.put(entry1.getKey().getAppName(), entry1.getValue());
+                    //公司下的所有类别统计
+                    Map<String, Double> cmpAccountDetailMap = new HashMap<>();
+                    entry.getValue().entrySet().forEach(sub -> {
+                        cmpAccountDetailMap.put(sub.getKey(), sub.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
                     });
-                    AccountForDepartRq.DepartMentAccountRQ departMentAccountRQ = new AccountForDepartRq.DepartMentAccountRQ();
-                    departMentAccountRQ.setLevelName("集团");
-                    departMentAccountRQ.setTotalAccountForDept(accountRQ.getTotalAccountForCompany());
-                    departMentAccountRQ.setDeptName("集团");
-                    departMentAccountRQ.setAccountDetail(accountDetail);
+                    accountRQ.setCmpAccountDetailMap(cmpAccountDetailMap);
 
-                    accountRQ.getDepartMentAccountRQList().add(departMentAccountRQ);
+                    //部门消费分类列表统计
+                    List<AccountForDepartmentRq> accountForDepartmentRqs = new ArrayList<>();
+                    entry.getValue().entrySet().forEach(sub -> {
 
-                    //部门账
-                    Map<String, Double> deptMap = entry.getValue().stream()
-                            .collect(Collectors.groupingBy(OrderStatisticsDept::getDeptName
-                                    , Collectors.summingDouble(OrderStatisticsDept::getAmount)));
+                        AccountForDepartmentRq accountForDepartmentRq = new AccountForDepartmentRq();
+                        accountForDepartmentRq.setAppName(sub.getKey());
+                        Map<String, Double> accountDeptMap = sub.getValue().stream()
+                                .collect(Collectors.groupingBy(OrderStatisticsDept::getDeptName, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
 
-                    deptMap.entrySet().forEach(item -> {
-                        AccountForDepartRq.DepartMentAccountRQ departMentAccountRQ2 = new AccountForDepartRq.DepartMentAccountRQ();
-                        departMentAccountRQ2.setLevelName("部门");
-                        departMentAccountRQ2.setTotalAccountForDept(item.getValue());
-                        departMentAccountRQ2.setDeptName(item.getKey());
-
-                        Map<String, Double> map2 = entry.getValue().stream().filter(el -> el.getDeptName().equals(item.getKey()))
-                                .collect(Collectors.groupingBy(OrderStatisticsDept::getAppName
-                                        , Collectors.summingDouble(OrderStatisticsDept::getAmount)));
-
-                        Map<String, Double> accountDetai2 = new HashMap<>();
-                        map2.entrySet().forEach(entry1 -> {
-                            accountDetai2.put(entry1.getKey(), entry1.getValue());
+                        Map<String, Double> orgAccountDetailMap = new HashMap<>();
+                        accountDeptMap.entrySet().forEach(item -> {
+                            orgAccountDetailMap.put(item.getKey(), item.getValue());
                         });
+                        accountForDepartmentRq.setOrgAccountDetailMap(orgAccountDetailMap);
+                        accountForDepartmentRq.setAccountTime(new Date());
+                        accountForDepartmentRq.setTotalAccountForApp(sub.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
 
-                        departMentAccountRQ2.setAccountDetail(accountDetai2);
-                        accountRQ.getDepartMentAccountRQList().add(departMentAccountRQ2);
-
+                        accountForDepartmentRqs.add(accountForDepartmentRq);
                     });
-
+                    accountRQ.getAccountForDepartmentRqs().addAll(accountForDepartmentRqs);
+                    accountRQ.setTotalAccountForTenant(accountForDepartmentRqs.stream().mapToDouble(AccountForDepartmentRq::getTotalAccountForApp).sum());
                     accountRQList.add(accountRQ);
                 }
         );

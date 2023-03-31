@@ -1,7 +1,11 @@
 package com.jeequan.jeepay.mgr.ctrl.anon;
 
 import com.jeequan.jeepay.mgr.rqrs.AccountForDepartRq;
+import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
+import com.jeequan.jeepay.mgr.service.Page;
+import com.jeequan.jeepay.mgr.service.PageService;
 import com.jeequan.jeepay.mgr.service.ReportingService;
+import com.jeequan.jeepay.mgr.util.JxlsUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -14,22 +18,39 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-import java.util.UUID;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/*
+/**
  * 报表下载
  *
- * @author czw
+ * @author chengzw
  * @site https://www.jeequan.com
  * @date 2023/03/17 17:09
  */
 @Controller
-@RequestMapping("/api/anon/excel")
+@RequestMapping("/api/anon/report")
 public class ReportController {
 
-    @Autowired
-    private ReportingService reportingService;
+    private final ReportingService reportingService;
+    public ReportController(ReportingService reportingService) {
+        this.reportingService = reportingService;
+    }
+
+    //下载文件名
+    private final String FILENAMEPREFIX = "玖旺物业入驻企业%s月份费用账单[%s]";
+
+    //企业账单模板文件
+    private final String TENANTTEMPLATE="";
+
+    //商户账单模板文件
+    private final String MECHANTTEMPLATE="";
+
+    //订单流水模块文件
+    private final String ORDERFLOWTEMPLATE="";
+
 
     @RequestMapping(value = "/export/{month}", method = RequestMethod.GET)
     public void export(HttpServletResponse response, @PathVariable int month) throws Exception {
@@ -102,7 +123,7 @@ public class ReportController {
 
                 Row for_row = sheet.createRow(r);
                 Cell for_cell = for_row.createCell(0);
-                for_cell.setCellValue(rq.getDeptName() + "：" +String.format("%.2f", rq.getTotalAccountForDept()));
+                for_cell.setCellValue(rq.getDeptName() + "：" + String.format("%.2f", rq.getTotalAccountForDept()));
                 for_cell.setCellStyle(getStyle(false, 2, workbook));
 
                 CellRangeAddress range = new CellRangeAddress(r, r, 0, 3);
@@ -147,6 +168,73 @@ public class ReportController {
         out.close();
     }
 
+
+    @RequestMapping(value = "/tenant/{month}", method = RequestMethod.GET)
+    public void excelExport(HttpServletResponse response, @PathVariable int month) throws Exception {
+
+        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenants(month);
+        if (accountForTenantRqs.size() > 0) {
+            accountForTenantRqs = accountForTenantRqs.stream().sorted(Comparator.comparing(AccountForTenantRq::getGroupName)).collect(Collectors.toList());
+        }
+        List<String> sheetNames = accountForTenantRqs.stream().map(item -> item.getGroupName()).collect(Collectors.toList());
+
+        // 模板位置，输出流
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/template_2.xlsx");
+
+        //数据分页转换
+        List<Page> page = PageService.individual(accountForTenantRqs, sheetNames);
+
+        Map<String, Object> model = new HashMap<String, Object>();
+        model.put("pages_one", page);
+        model.put("pages_two", page);
+        model.put("sheetNames_1", getSheetMain(page, month));
+        model.put("sheetNames_2", getSheetSlave(page, month));
+
+        response.setContentType("application/octet-stream;charset=UTF-8");
+        //设置响应头信息header，下载时以文件附件下载
+        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyyMMdd");
+        Date date = new Date();
+        String str = simpleDate.format(date);
+        Random rand = new Random();
+        int rannum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
+        String fileName = String.format(FILENAMEPREFIX, month, str + rannum) + ".xlsx";
+        response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+
+        ServletOutputStream outputStream = response.getOutputStream();
+
+        JxlsUtils.exportExcel(in, outputStream, model);
+
+        outputStream.flush();
+        outputStream.close();
+        System.out.println("完成");
+    }
+
+    /**
+     * 设置excel的主表sheetname
+     */
+    public ArrayList<String> getSheetMain(List<Page> page, int month) {
+        ArrayList<String> al = new ArrayList<String>();
+        for (int i = 0; i < page.size(); i++) {
+            al.add(String.format("%s-%d月部门费用单", page.get(i).getSheetName(), month));
+
+            al.add(page.get(i).getSheetName());
+        }
+        return al;
+    }
+
+
+    /**
+     * 设置excel的副表sheetname
+     */
+    public ArrayList<String> getSheetSlave(List<Page> page, int month) {
+        ArrayList<String> al = new ArrayList<String>();
+        for (int i = 0; i < page.size(); i++) {
+            al.add(String.format("%s-%d月汇总账单", page.get(i).getSheetName(), month));
+        }
+        return al;
+    }
+
+
     private CellStyle getStyle(boolean isLeft, int styleIndex, Workbook book) {
         CellStyle style = book.createCellStyle();
         if (isLeft) {
@@ -188,7 +276,6 @@ public class ReportController {
         style.setFont(font);
         return style;
     }
-
 
     /**
      * 为合并的单元格设置样式（可根据需要自行调整）
