@@ -185,6 +185,7 @@ public class ReportController {
         List<Page> page = PageService.individual(accountForTenantRqs, sheetNames);
 
         Map<String, Object> model = new HashMap<String, Object>();
+        model.put("month", month);
         model.put("pages_one", page);
         model.put("pages_two", page);
         model.put("sheetNames_1", getSheetMain(page, month));
