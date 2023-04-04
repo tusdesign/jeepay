@@ -28,16 +28,16 @@ public class TaskRunner implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        // 初始加载数据库里状态为正常的定时任务
-        LambdaQueryWrapper<SysJob> wrapper = SysJob.gw();
-        List<SysJob> jobList = sysJobService.list(wrapper.eq(SysJob::getJobStatus, SysJob.NORMAL));
-
-        if (CollectionUtils.isNotEmpty(jobList)) {
-            for (SysJob job : jobList) {
-                SchedulingRunnable task = new SchedulingRunnable(job);
-                cronTaskRegistrar.addCronTask(task, job.getCronExpression());
-            }
-            logger.info("定时任务已加载完毕...");
-        }
+//        // 初始加载数据库里状态为正常的定时任务
+//        LambdaQueryWrapper<SysJob> wrapper = SysJob.gw();
+//        List<SysJob> jobList = sysJobService.list(wrapper.eq(SysJob::getJobStatus, SysJob.NORMAL));
+//
+//        if (CollectionUtils.isNotEmpty(jobList)) {
+//            for (SysJob job : jobList) {
+//                SchedulingRunnable task = new SchedulingRunnable(job);
+//                cronTaskRegistrar.addCronTask(task, job.getCronExpression());
+//            }
+//            logger.info("定时任务已加载完毕...");
+//        }
     }
 }

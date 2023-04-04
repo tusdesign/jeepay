@@ -123,7 +123,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
      * @return MutablePair<String, Object>
      */
     @SneakyThrows()
-    private MutablePair<String, String> getDept(String deptId) {
+    public MutablePair<String, String> getDept(String deptId) {
 
         String[] nameArray;
 

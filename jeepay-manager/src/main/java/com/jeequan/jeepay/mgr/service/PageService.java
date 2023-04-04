@@ -79,7 +79,7 @@ public class PageService {
             p.setOnlyOne(dataList.get(i));
 
             String sheetName = "page_" + (i + 1);
-            if (CollectionUtil.isEmpty(sheetNames) && sheetNames.size() > 0) {
+            if (!CollectionUtil.isEmpty(sheetNames) && sheetNames.size() > 0) {
                 sheetName = sheetNames.get(i);
             }
             p.setSheetName(sheetName);

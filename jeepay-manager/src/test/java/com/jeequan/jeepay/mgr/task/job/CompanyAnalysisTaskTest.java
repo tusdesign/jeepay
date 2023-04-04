@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateTime;
 import com.jeequan.jeepay.core.entity.SysJob;
 import com.jeequan.jeepay.mgr.bootstrap.JeepayMgrApplication;
 import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
@@ -31,6 +32,13 @@ class CompanyAnalysisTaskTest {
         sysJob.setBeanName("companyAnalysisJob");
         sysJob.setCronExpression("0 0 * * * *");
         companyAnalysisTask.process(sysJob);
+        Assert.isTrue(true, "test successfully");
+    }
+
+    @Test
+    void process2() throws Exception {
+
+        MutablePair<String, String> a= companyAnalysisTask.getDept("55770282-8b40-41b0-aa8d-de49b1317853");
         Assert.isTrue(true, "test successfully");
     }
 }
