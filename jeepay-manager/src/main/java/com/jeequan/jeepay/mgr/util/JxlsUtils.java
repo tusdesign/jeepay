@@ -59,7 +59,7 @@ public class JxlsUtils {
         //必须要这个，否者表格函数统计会错乱
         jxlsHelper.setProcessFormulas(true);
         jxlsHelper.setFormulaProcessor(new StandardFormulaProcessor()).setEvaluateFormulas(true);
-        context.putVar("totalCellUpdater", new TotalCellUpdater());
+        //context.putVar("totalCellUpdater", new TotalCellUpdater());
         jxlsHelper.setUseFastFormulaProcessor(false).setEvaluateFormulas(true).processTemplate(context,transformer);
         jxlsHelper.setDeleteTemplateSheet(true);
 

@@ -33,4 +33,11 @@ public class AccountForDepartmentRq {
      */
     private Map<String, Double> orgAccountDetailMap;
 
+
+    /**
+     * 汇总每个部门消费子类别情况
+     */
+    private Map<String, Double> orgAccountTypeDetailMap;
+
+
 }

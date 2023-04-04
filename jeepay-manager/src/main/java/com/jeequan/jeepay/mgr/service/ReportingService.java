@@ -8,6 +8,7 @@ import com.jeequan.jeepay.mgr.rqrs.AccountForDepartmentRq;
 import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
 import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -196,14 +197,27 @@ public class ReportingService {
 
                         AccountForDepartmentRq accountForDepartmentRq = new AccountForDepartmentRq();
                         accountForDepartmentRq.setAppName(sub.getKey());
-                        Map<String, Double> accountDeptMap = sub.getValue().stream()
-                                .collect(Collectors.groupingBy(OrderStatisticsDept::getDeptName, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
 
+                        //拓展type没有分类的情况
+                        Map<String, Double> accountDeptMap = sub.getValue().stream().filter(item -> StringUtils.isEmpty(item.getExtType()))
+                                .collect(Collectors.groupingBy(OrderStatisticsDept::getDeptName, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
                         Map<String, Double> orgAccountDetailMap = new HashMap<>();
                         accountDeptMap.entrySet().forEach(item -> {
                             orgAccountDetailMap.put(item.getKey(), item.getValue());
                         });
                         accountForDepartmentRq.setOrgAccountDetailMap(orgAccountDetailMap);
+
+                        //拓展type有分类的情况
+                        Map<String, Double> accountTypeDeptMap = sub.getValue().stream().filter(item -> !StringUtils.isEmpty(item.getExtType()))
+                                .collect(Collectors.groupingBy((item) -> {
+                                    return item.getDeptName() + "_" + item.getDeptName();
+                                }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
+                        Map<String, Double> orgAccountTypeDetailMap = new HashMap<>();
+                        accountTypeDeptMap.entrySet().forEach(item -> {
+                            orgAccountTypeDetailMap.put(item.getKey(), item.getValue());
+                        });
+                        accountForDepartmentRq.setOrgAccountTypeDetailMap(orgAccountTypeDetailMap);
+
                         accountForDepartmentRq.setAccountTime(new Date());
                         accountForDepartmentRq.setTotalAccountForApp(sub.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
 

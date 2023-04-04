@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 public class ReportController {
 
     private final ReportingService reportingService;
+
     public ReportController(ReportingService reportingService) {
         this.reportingService = reportingService;
     }
@@ -43,13 +44,13 @@ public class ReportController {
     private final String FILENAMEPREFIX = "玖旺物业入驻企业%s月份费用账单[%s]";
 
     //企业账单模板文件
-    private final String TENANTTEMPLATE="";
+    private final String TENANTTEMPLATE = "";
 
     //商户账单模板文件
-    private final String MECHANTTEMPLATE="";
+    private final String MECHANTTEMPLATE = "";
 
     //订单流水模块文件
-    private final String ORDERFLOWTEMPLATE="";
+    private final String ORDERFLOWTEMPLATE = "";
 
 
     @RequestMapping(value = "/export/{month}", method = RequestMethod.GET)
@@ -178,35 +179,57 @@ public class ReportController {
         }
         List<String> sheetNames = accountForTenantRqs.stream().map(item -> item.getGroupName()).collect(Collectors.toList());
 
-        // 模板位置，输出流
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/template_2.xlsx");
-
         //数据分页转换
-        List<Page> page = PageService.individual(accountForTenantRqs, sheetNames);
+        List<Page> page1 = PageService.individual(accountForTenantRqs, sheetNames);
+
+        List<Page> page2 = PageService.individual(accountForTenantRqs, sheetNames);
+        page2 = page2.stream().filter(item -> ((AccountForTenantRq) item.getOnlyOne()).getAccountForDepartmentRqs().stream()
+                        .filter(s->s.getOrgAccountDetailMap().size()>0)
+                        .findAny().isPresent())
+                .collect(Collectors.toList());
 
         Map<String, Object> model = new HashMap<String, Object>();
         model.put("month", month);
-        model.put("pages_one", page);
-        model.put("pages_two", page);
-        model.put("sheetNames_1", getSheetMain(page, month));
-        model.put("sheetNames_2", getSheetSlave(page, month));
+        model.put("pages_one", page1);
+        model.put("pages_two", page2);
+        model.put("sheetNames_1", getSheetMain(page1, month));
+        model.put("sheetNames_2", getSheetSlave(page2, month));
 
-        response.setContentType("application/octet-stream;charset=UTF-8");
-        //设置响应头信息header，下载时以文件附件下载
-        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyyMMdd");
-        Date date = new Date();
-        String str = simpleDate.format(date);
-        Random rand = new Random();
-        int rannum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
-        String fileName = String.format(FILENAMEPREFIX, month, str + rannum) + ".xlsx";
-        response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
 
-        ServletOutputStream outputStream = response.getOutputStream();
+        // 模板位置，输出流
+        String a = this.getClass().getResource("static/TEMPLATE_TENANTx.xlsx").getPath();
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/TEMPLATE_TENANTx.xlsx");
+        ServletOutputStream outputStream=null;
 
-        JxlsUtils.exportExcel(in, outputStream, model);
+        try {
 
-        outputStream.flush();
-        outputStream.close();
+            response.setContentType("application/octet-stream;charset=UTF-8");
+            //设置响应头信息header，下载时以文件附件下载
+            SimpleDateFormat simpleDate = new SimpleDateFormat("yyyyMMdd");
+            Date date = new Date();
+            String str = simpleDate.format(date);
+            Random rand = new Random();
+            int rannum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
+            String fileName = String.format(FILENAMEPREFIX, month, str + rannum) + ".xlsx";
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
+
+            outputStream = response.getOutputStream();
+
+            JxlsUtils.exportExcel(in, outputStream, model);
+
+            outputStream.flush();
+            outputStream.close();
+
+        }catch (Exception e){
+            if(in!=null){
+                in.close();
+            }
+            if(outputStream!=null){
+                outputStream.flush();
+                outputStream.close();
+            }
+            e.printStackTrace();
+        }
         System.out.println("完成");
     }
 
