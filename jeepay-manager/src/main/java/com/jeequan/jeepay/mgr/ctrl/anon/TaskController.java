@@ -45,7 +45,6 @@ public class TaskController {
     @Autowired
     private CronTaskRegistrar cronTaskRegistrar;
 
-
     @RequestMapping(value = "/add", method = RequestMethod.POST)
     public ApiRes startAtOnce(@RequestBody TaskScheduleRq job) throws BizException {
 
@@ -83,13 +82,13 @@ public class TaskController {
             sysJob.setCronExpression(job.getCronExpression());
         }
 
-        if (!sysJobService.save(sysJob))
-            return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "新增失败");
-        else {
-            if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
-                SchedulingRunnable task = new SchedulingRunnable(sysJob);
-                cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
-            }
+        if (!StringUtils.isEmpty(job.getCronExpression()) && !job.getCronExpression().equals("0 0 * * * *")) {
+            if (!sysJobService.save(sysJob))
+                return ApiRes.fail(ApiCodeEnum.SYS_OPERATION_FAIL_CREATE, "新增失败");
+        }
+        if (sysJob.getJobStatus().equals(SysJob.NORMAL)) {
+            SchedulingRunnable task = new SchedulingRunnable(sysJob);
+            cronTaskRegistrar.addCronTask(task, sysJob.getCronExpression());
         }
         return ApiRes.ok(job);
     }

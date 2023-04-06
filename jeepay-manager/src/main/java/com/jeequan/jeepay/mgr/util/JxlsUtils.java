@@ -23,7 +23,6 @@ import java.util.Map;
 
 public class JxlsUtils {
 
-
     public static class TotalCellUpdater implements CellDataUpdater {
 
         public void updateCellData(CellData cellData, CellRef targetCell, Context context) {
@@ -105,6 +104,21 @@ public class JxlsUtils {
     // if判断
     public Object ifelse(boolean b, Object o1, Object o2) {
         return b ? o1 : o2;
+    }
+
+    //字符串分隔
+    public String [] splitString(String fieldString){
+        String [] groups=new String[2];
+        String [] fields= fieldString.split("\\$",2);
+        if(fields.length==2){
+            groups[0]=fields[0];
+            groups[1]=fields[1];
+        }
+        if(fields.length==1){
+            groups[0]=fields[0];
+            groups[1]="";
+        }
+        return groups;
     }
 
 

@@ -13,6 +13,7 @@ import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
 import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component("companyAnalysisJob")
-@Configuration
 public class CompanyAnalysisJob extends AbstractAnalysisJob {
 
     @Value(value = "${qiDi.gateWay.url}")
@@ -68,13 +69,10 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
     @Action("企业账单报表分析")
     public void process(SysJob job) throws Exception {
 
-        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-
-        JSONObject jsonObject= JSONObject.parseObject(job.getMethodParams());
-        MutablePair<String, String> timePair = this.getPeriod(
-                jsonObject.getString("period")
-                , Optional.ofNullable(jsonObject.getString("timeStart")).orElse(TimeUtil.getBeforeFirstDayDate())
-                , Optional.ofNullable(jsonObject.getString("timeEnd")).orElse(TimeUtil.getBeforeLastDayDate()));
+        JSONObject jsonObject = JSONObject.parseObject(job.getMethodParams());
+        MutablePair<String, String> timePair = this.getPeriod(jsonObject.getString("period")
+                ,Optional.ofNullable(jsonObject.getString("timeStart")).orElse(TimeUtil.getBeforeFirstDayDate())
+                ,Optional.ofNullable(jsonObject.getString("timeEnd")).orElse(TimeUtil.getBeforeLastDayDate()));
 
         Long analyseId = System.currentTimeMillis();//产生版本号
 
@@ -115,46 +113,44 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
         }
     }
 
-
     /**
      * 根据部门Id得到部门信息
      *
      * @param deptId
      * @return MutablePair<String, Object>
      */
-    @SneakyThrows()
     public MutablePair<String, String> getDept(String deptId) {
 
         String[] nameArray;
-
-        //先去缓存中查一下
-        String organization = RedisUtil.getString(deptId);
+        String organization = RedisUtil.getString(deptId);//先去缓存中查一下
         if (organization == null || organization.isEmpty()) {
             HttpHeaders headers = new HttpHeaders();
             headers.add("X-API-KEY", secretKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<String> request =
-                    new HttpEntity<String>(null, headers);
-            ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
+            HttpEntity<String> request = new HttpEntity<String>(null, headers);
+            try {
+                ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
 
-            if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
-                Map<String, Object> responseBody = responseMap.getBody();
-                if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
+                if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
+                    Map<String, Object> responseBody = responseMap.getBody();
+                    if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
 
-                    String fullPath = String.valueOf(responseBody.get("path"));
+                        String fullPath = String.valueOf(responseBody.get("path"));
 
-                    RedisUtil.setString(deptId, fullPath, 30, TimeUnit.DAYS);
+                        RedisUtil.setString(deptId, fullPath, 30, TimeUnit.DAYS);
 
-                    nameArray = StringUtils.split(fullPath, "/");
-                    return MutablePair.of(nameArray[0], nameArray[1]);
+                        nameArray = StringUtils.split(fullPath, "/");
+                        return MutablePair.of(nameArray[0], nameArray[1]);
+                    }
                 }
+            } catch (Exception ex) {
+                log.error("请求部门接口出错:"+ex.getMessage());
             }
         } else {
             nameArray = StringUtils.split(organization, "/");
             return MutablePair.of(nameArray[0], nameArray[1]);
-
         }
-        return MutablePair.of("未知", "未知");
+        return MutablePair.of("", "");
     }
 }

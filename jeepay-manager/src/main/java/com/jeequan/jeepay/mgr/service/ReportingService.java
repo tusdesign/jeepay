@@ -3,6 +3,7 @@ package com.jeequan.jeepay.mgr.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
+import com.jeequan.jeepay.core.exception.BizException;
 import com.jeequan.jeepay.mgr.rqrs.AccountForDepartRq;
 import com.jeequan.jeepay.mgr.rqrs.AccountForDepartmentRq;
 import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
@@ -156,30 +157,32 @@ public class ReportingService {
         LocalDateTime dateStart = LocalDateTime.of(ldt.getYear(), month, 1, 0, 0, 0);
         LocalDateTime dateEnd = LocalDateTime.of(ldt.getYear(), month, getDaysByYearMonth(ldt.getYear(), month), 23, 59, 59);
 
+        //最新版本的统计数据
         QueryWrapper<OrderStatisticsDept> queryWrapper = new QueryWrapper<>();
         queryWrapper.between("created_at", dtf.format(dateStart), dateEnd);
         queryWrapper.eq(month > 0, "MONTH(FROM_UNIXTIME(analyse_id/1000))", month);
-        List<OrderStatisticsDept> orderStatisticsDeptList = statisticsDeptService.list(queryWrapper);
+        queryWrapper.orderByDesc("analyse_id");
+        queryWrapper.last("limit 1");
+        OrderStatisticsDept statisticsDept = statisticsDeptService.getOne(queryWrapper);
+        if (Objects.isNull(statisticsDept)) {
+            throw new BizException("查找的月份账单还没有生成!");
+        }
 
-        Map<Long, List<OrderStatisticsDept>> orderDepatListMap =
-                orderStatisticsDeptList.stream().collect(Collectors.groupingBy(OrderStatisticsDept::getAnalyseId));
-
-        Set<Long> set = orderDepatListMap.keySet();
-        Object[] obj = set.toArray();
-        Arrays.sort(obj);
-
-        //最新版本的统计数据
-        List<OrderStatisticsDept> orderStatisticsDeptsNews = orderDepatListMap.get(obj[obj.length - 1]);
+        List<OrderStatisticsDept> orderStatisticsDeptList = statisticsDeptService.list(
+                new QueryWrapper<OrderStatisticsDept>()
+                        .eq("analyse_id", statisticsDept.getAnalyseId())
+                        .and(e->e.ne("dept_name","")
+                                .isNotNull("dept_name"))
+                        );
 
         //按公司，消费类别两层分组
-        Map<String, Map<String, List<OrderStatisticsDept>>> companyMap = orderStatisticsDeptsNews.stream()
+        Map<String, Map<String, List<OrderStatisticsDept>>> companyMap = orderStatisticsDeptList.stream()
                 .collect(Collectors.groupingBy(OrderStatisticsDept::getParentName,
                         Collectors.groupingBy(OrderStatisticsDept::getAppName)));
 
         //遍历公司列表
         companyMap.entrySet().forEach(entry -> {
                     AccountForTenantRq accountRQ = new AccountForTenantRq();
-
                     accountRQ.setAccountTime(new Date());
                     accountRQ.setGroupName(entry.getKey());
                     accountRQ.setAccountForDepartmentRqs(new ArrayList<AccountForDepartmentRq>());
@@ -205,22 +208,22 @@ public class ReportingService {
                         accountDeptMap.entrySet().forEach(item -> {
                             orgAccountDetailMap.put(item.getKey(), item.getValue());
                         });
-                        accountForDepartmentRq.setOrgAccountDetailMap(orgAccountDetailMap);
+                        accountForDepartmentRq.setOrgAccountTypeDetailMap(orgAccountDetailMap);
 
                         //拓展type有分类的情况
                         Map<String, Double> accountTypeDeptMap = sub.getValue().stream().filter(item -> !StringUtils.isEmpty(item.getExtType()))
                                 .collect(Collectors.groupingBy((item) -> {
-                                    return item.getDeptName() + "_" + item.getDeptName();
+                                    return item.getDeptName() + "$" + item.getExtType();
                                 }, Collectors.summingDouble(OrderStatisticsDept::getAmount)));
+
                         Map<String, Double> orgAccountTypeDetailMap = new HashMap<>();
-                        accountTypeDeptMap.entrySet().forEach(item -> {
+                        TreeMap<String,Double> treeMap=new TreeMap<>(accountTypeDeptMap);
+                        treeMap.entrySet().forEach(item -> {
                             orgAccountTypeDetailMap.put(item.getKey(), item.getValue());
                         });
-                        accountForDepartmentRq.setOrgAccountTypeDetailMap(orgAccountTypeDetailMap);
-
+                        accountForDepartmentRq.getOrgAccountTypeDetailMap().putAll(orgAccountTypeDetailMap);
                         accountForDepartmentRq.setAccountTime(new Date());
                         accountForDepartmentRq.setTotalAccountForApp(sub.getValue().stream().mapToDouble(OrderStatisticsDept::getAmount).sum());
-
                         accountForDepartmentRqs.add(accountForDepartmentRq);
                     });
                     accountRQ.getAccountForDepartmentRqs().addAll(accountForDepartmentRqs);

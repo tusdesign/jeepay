@@ -54,123 +54,6 @@ public class ReportController {
     private final String ORDERFLOWTEMPLATE = "TEMPLATE_ORDER_FLOW.xlsx";
 
 
-//    @RequestMapping(value = "/export/{month}", method = RequestMethod.GET)
-//    public void export(HttpServletResponse response, @PathVariable int month) throws Exception {
-//
-//        List<AccountForDepartRq> accountRQList = reportingService.getAccountList(month);
-//        Workbook workbook = new XSSFWorkbook();
-//
-//        accountRQList.forEach(item -> {
-//
-//            Sheet sheet = workbook.createSheet("账单-" + (StringUtils.isEmpty(item.getCompanyName()) ? "未知" : item.getCompanyName()));
-//
-//            for (int i = 0; i < 4; i++) {
-//                if (i == 0) {
-//                    sheet.setColumnWidth(i, 20 * 256);
-//                } else {
-//                    sheet.setColumnWidth(i, 30 * 256);
-//                    //sheet.autoSizeColumn(i,true);
-//                }
-//            }
-//            CellRangeAddress range_1 = new CellRangeAddress(0, 0, 0, 3);
-//            sheet.addMergedRegion(range_1);
-//
-//            int rowIndex = 0;
-//            Row row = sheet.createRow(rowIndex++);
-//            Cell cell = row.createCell(0);
-//            cell.setCellValue(String.format("久旺物业入驻企业%s月度账单", month));
-//            cell.setCellStyle(getStyle(false, 2, workbook));
-//
-//            CellRangeAddress range_2 = new CellRangeAddress(1, 1, 1, 3);
-//            sheet.addMergedRegion(range_2);
-//
-//            CellRangeAddress range_3 = new CellRangeAddress(2, 2, 1, 3);
-//            sheet.addMergedRegion(range_3);
-//
-//            Row row1 = sheet.createRow(rowIndex++);
-//            Cell cell1 = row1.createCell(0);
-//            cell1.setCellValue("企业");
-//            Cell cell2 = row1.createCell(1);
-//            cell2.setCellValue(item.getCompanyName());
-//            cell2.setCellStyle(getStyle(false, 0, workbook));
-//
-//            Row row2 = sheet.createRow(rowIndex++);
-//            Cell cell3 = row2.createCell(0);
-//            cell3.setCellValue("总账");
-//            cell2.setCellStyle(getStyle(false, 0, workbook));
-//
-//            Cell cell4 = row2.createCell(1);
-//            cell4.setCellValue(item.getTotalAccountForCompany());
-//            cell2.setCellStyle(getStyle(false, -1, workbook));
-//
-//            CellStyle cellStylex = setDefaultStyle2(workbook);
-//            setRegionStyle(sheet, range_2, cellStylex);
-//
-//            CellStyle cellStyley = setDefaultStyle2(workbook);
-//            setRegionStyle(sheet, range_3, cellStyley);
-//
-//            CellRangeAddress range_4 = new CellRangeAddress(3, 3, 0, 3);
-//            sheet.addMergedRegion(range_4);
-//            Row range_4_row = sheet.createRow(rowIndex++);
-//            Cell range_4_cell = range_4_row.createCell(0);
-//            range_4_cell.setCellValue("货币形式：CNY   单位：元");
-//            range_4_cell.setCellStyle(getStyle(false, 0, workbook));
-//
-//            CellStyle cellStyle = setDefaultStyle(workbook);
-//            setRegionStyle(sheet, range_4, cellStyle);
-//
-//            for (AccountForDepartRq.DepartMentAccountRQ rq : item.getDepartMentAccountRQList()) {
-//
-//                int r = rowIndex++;
-//
-//                Row for_row = sheet.createRow(r);
-//                Cell for_cell = for_row.createCell(0);
-//                for_cell.setCellValue(rq.getDeptName() + "：" + String.format("%.2f", rq.getTotalAccountForDept()));
-//                for_cell.setCellStyle(getStyle(false, 2, workbook));
-//
-//                CellRangeAddress range = new CellRangeAddress(r, r, 0, 3);
-//                sheet.addMergedRegion(range);
-//
-//                for (String key : rq.getAccountDetail().keySet()) {
-//                    Double value = rq.getAccountDetail().get(key);
-//
-//                    Row app_row = sheet.createRow(rowIndex++);
-//
-//                    Cell acell = app_row.createCell(0);
-//                    acell.setCellValue("费用类别");
-//                    acell.setCellStyle(getStyle(true, 0, workbook));
-//
-//                    Cell key_cell = app_row.createCell(2);
-//                    key_cell.setCellValue(key);
-//                    key_cell.setCellStyle(getStyle(false, 0, workbook));
-//
-//                    Cell value_cell = app_row.createCell(3);
-//                    value_cell.setCellValue(value.doubleValue());
-//                    value_cell.setCellStyle(getStyle(false, -1, workbook));
-//                }
-//
-//                CellRangeAddress range_type = new CellRangeAddress(r + 1, rq.getAccountDetail().size() + r, 0, 1);
-//                sheet.addMergedRegion(range_type);
-//
-//                CellStyle cellStylen = setDefaultStyle2(workbook);
-//                setRegionStyle(sheet, range_type, cellStylen);
-//            }
-//
-//        });
-//
-//        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-//        response.setCharacterEncoding("utf-8");
-//        String name = new String(UUID.randomUUID().toString().getBytes("GBK"), "ISO8859_1") + ".xlsx";
-//        response.addHeader("Content-Disposition", "attachment;filename=" + name);
-//        response.addHeader("Pargam", "no-cache");
-//        response.addHeader("Cache-Control", "no-cache");
-//        ServletOutputStream out = response.getOutputStream();
-//        workbook.write(out);
-//        out.flush();
-//        out.close();
-//    }
-
-
     @RequestMapping(value = "/tenant/{month}", method = RequestMethod.GET)
     public void excelExport(HttpServletResponse response, @PathVariable int month) throws Exception {
 
@@ -184,7 +67,7 @@ public class ReportController {
         List<Page> page1 = PageService.individual(accountForTenantRqs, sheetNames);
         List<Page> page2 = PageService.individual(accountForTenantRqs, sheetNames);
         page2 = page2.stream().filter(item -> ((AccountForTenantRq) item.getOnlyOne()).getAccountForDepartmentRqs().stream()
-                        .filter(s->s.getOrgAccountDetailMap().size()>0)
+                        .filter(s->s.getOrgAccountTypeDetailMap().size()>0)
                         .findAny().isPresent())
                 .collect(Collectors.toList());
 

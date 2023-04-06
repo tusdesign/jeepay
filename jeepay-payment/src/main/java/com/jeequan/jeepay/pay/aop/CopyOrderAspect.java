@@ -7,6 +7,7 @@ import com.jeequan.jeepay.core.entity.PayOrderExtend;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
 import com.jeequan.jeepay.service.impl.PayOrderService;
 import com.jeequan.jeepay.service.impl.SysLogService;
+import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -58,8 +59,16 @@ public class CopyOrderAspect {
         Object[] args = jp.getArgs();
         System.out.println("Aop.afterReturning() 目标方法+" + jp.getSignature().getName() + "返回值:" + retValue);
 
-        PayOrder payOrder = (PayOrder)args[0];
-        scheduledThreadPool.execute(() -> savePayOrderExtend(payOrder));
+        PayOrder payOrder = (PayOrder) args[0];
+        scheduledThreadPool.execute(() -> {
+            try {
+                savePayOrderExtend(payOrder);
+                //delayed.complete(result);
+            } catch (Throwable th) {
+                logger.error("插入到订单拓展表报错:" + th.getMessage());
+                //delayed.completeExceptionally(th);
+            }
+        });
     }
 
     private boolean savePayOrderExtend(PayOrder order) {
@@ -70,24 +79,24 @@ public class CopyOrderAspect {
         String extParam = order.getExtParam();
         if (!ObjectUtils.isEmpty(extParam)) {
             JSONObject jsonObject = JSONObject.parseObject(extParam);
-            if (!jsonObject.getString("businessId").isEmpty()) {
+            if (!StringUtils.isEmpty(jsonObject.getString("businessId"))) {
                 payOrderExtend.setBusinessId(jsonObject.getString("businessId"));
             }
-            if (!jsonObject.getString("pid").isEmpty()) {
+            if (!StringUtils.isEmpty(jsonObject.getString("pid"))) {
                 payOrderExtend.setPid(jsonObject.getString("pid"));
             }
-            if (!jsonObject.getString("dealType").isEmpty()) {
+            if (!StringUtils.isEmpty(jsonObject.getString("dealType"))) {
                 payOrderExtend.setDealType(jsonObject.getString("dealType"));
             }
-            if (!jsonObject.getString("deptId").isEmpty()) {
+            if (!StringUtils.isEmpty(jsonObject.getString("deptId"))) {
                 payOrderExtend.setDeptId(jsonObject.getString("deptId"));
             }
-            if (!jsonObject.getString("type").isEmpty()) {
+            if (!StringUtils.isEmpty(jsonObject.getString("type"))) {
                 payOrderExtend.setExtType(jsonObject.getString("type"));
             }
             return payOrderExtendService.save(payOrderExtend);
         }
-       return false;
+        return false;
     }
 
     @Around(value = "pointCut()")
