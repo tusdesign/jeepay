@@ -2,9 +2,7 @@ package com.jeequan.jeepay.mgr.bootstrap;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.jeequan.jeepay.core.entity.MchNotifyRecord;
 import com.jeequan.jeepay.core.entity.SysJob;
-import com.jeequan.jeepay.mgr.rqrs.EnumTime;
 import com.jeequan.jeepay.mgr.task.CronTaskRegistrar;
 import com.jeequan.jeepay.mgr.task.SchedulingRunnable;
 import com.jeequan.jeepay.service.impl.SysJobService;
@@ -29,8 +27,6 @@ public class TaskRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
-        // 初始加载数据库里状态为正常的定时任务
         LambdaQueryWrapper<SysJob> wrapper = SysJob.gw();
         List<SysJob> jobList = sysJobService.list(wrapper.eq(SysJob::getJobStatus, SysJob.NORMAL));
 

@@ -1,11 +1,11 @@
 package com.jeequan.jeepay.mgr.task.job;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsMerchant;
 import com.jeequan.jeepay.core.entity.SysJob;
-import com.jeequan.jeepay.mgr.rqrs.JobRQ;
 import com.jeequan.jeepay.service.impl.OrderStatisticsMerchantService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
 import com.jeequan.jeepay.service.impl.PayOrderService;
@@ -44,10 +44,12 @@ public class MerchantAnalysisJob extends AbstractAnalysisJob {
 
         SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 
+        JSONObject jsonObject= JSONObject.parseObject(job.getMethodParams());
         //时间段
-        MutablePair<String, String> timePair = this.getPeriod(job.getMethodParams()
-                , dateFormat.format(job.getTimeStart())
-                , dateFormat.format(job.getTimeEnd()));
+        MutablePair<String, String> timePair = this.getPeriod(
+                jsonObject.getString("period")
+                , dateFormat.format(jsonObject.getDate("timeStart"))
+                , dateFormat.format(jsonObject.getDate("timeEnd")));
 
         //产生版本号
         Long analyseId = System.currentTimeMillis();

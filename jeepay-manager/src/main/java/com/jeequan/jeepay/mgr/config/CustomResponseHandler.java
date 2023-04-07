@@ -5,6 +5,7 @@ import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeequan.jeepay.core.constants.ApiCodeEnum;
 import com.jeequan.jeepay.core.exception.BizException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -26,10 +27,9 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Configuration
 public class CustomResponseHandler implements ResponseErrorHandler {
-
-    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * 表示 response 是否存在任何错误。实现类通常会检查 response 的 HttpStatus。
@@ -62,14 +62,14 @@ public class CustomResponseHandler implements ResponseErrorHandler {
         if (response.getStatusCode().is4xxClientError()
                 || response.getStatusCode().is5xxServerError()) {
 
-
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(response.getBody()))) {
                 String httpBodyResponse = reader.lines()
                         .collect(Collectors.joining(""));
 
-                ObjectMapper mapper = new ObjectMapper();
+                log.error("ResponseBody: {}", httpBodyResponse);
 
+                ObjectMapper mapper = new ObjectMapper();
                 JSONObject jsonObject = mapper
                         .readValue(httpBodyResponse, JSONObject.class);
 
@@ -77,6 +77,7 @@ public class CustomResponseHandler implements ResponseErrorHandler {
             }
         }
     }
+
 
     /**
      * 覆盖了上面的方法
@@ -90,11 +91,21 @@ public class CustomResponseHandler implements ResponseErrorHandler {
      */
     @Override
     public void handleError(URI url, HttpMethod method, ClientHttpResponse response) throws IOException {
-        logger.error("=======================ERROR============================");
-        logger.error("HOST:{},URI：{}", url.getHost(), url.getPath());
-        logger.error("Method Type：{}", method.name());
-        logger.error("Exception：{}", response.getStatusCode());
-        logger.error("========================================================");
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(response.getBody()))) {
+            String httpBodyResponse = reader.lines()
+                    .collect(Collectors.joining(""));
+
+            log.error("URL: {}, HttpMethod: {}, ResponseBody: {}", url, method, httpBodyResponse);
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            JSONObject jsonObject = mapper
+                    .readValue(httpBodyResponse, JSONObject.class);
+
+            throw new BizException(ApiCodeEnum.SYSTEM_ERROR, jsonObject.getString("status") + "_" + jsonObject.getString("path") + "_" + jsonObject.getString("error"));
+        }
     }
 
     @Bean("customRestTemplate")
@@ -102,7 +113,6 @@ public class CustomResponseHandler implements ResponseErrorHandler {
     public RestTemplate restTemplate() {
 
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-
         requestFactory.setConnectTimeout(30000);// 设置连接超时，单位毫秒
         requestFactory.setReadTimeout(30000);//设置读取超时
 

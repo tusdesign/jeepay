@@ -1,8 +1,7 @@
 package com.jeequan.jeepay.mgr.task.job;
 
 import com.jeequan.jeepay.core.entity.SysJob;
-import com.jeequan.jeepay.mgr.rqrs.EnumTime;
-import com.jeequan.jeepay.mgr.rqrs.JobRQ;
+import com.jeequan.jeepay.mgr.util.EnumTime;
 import com.jeequan.jeepay.mgr.util.TimeUtil;
 import org.apache.commons.lang3.tuple.MutablePair;
 
@@ -15,20 +14,19 @@ public abstract class AbstractAnalysisJob {
         String createTimeStart = "";//开始时间
         String createTimeEnd = "";//结束时间
 
-        if (EnumTime.TIMETYPE.YEAR.key==period) {
+        if (EnumTime.TIMETYPE.YEAR.key.equals(period)) {
             createTimeStart = TimeUtil.getBeforeFirstYearDate();
             createTimeEnd = TimeUtil.getBeforeLastYearDate();
-        } else if (EnumTime.TIMETYPE.MONTH.key==period) {
+        } else if (EnumTime.TIMETYPE.MONTH.key.equals(period)) {
             createTimeStart = TimeUtil.getBeforeFirstMonthDate();
             createTimeEnd = TimeUtil.getBeforeLastMonthDate();
-        } else if (EnumTime.TIMETYPE.DAY.key==period) {
+        } else if (EnumTime.TIMETYPE.DAY.key.equals(period)) {
             createTimeStart = TimeUtil.getBeforeFirstDayDate();
             createTimeEnd = TimeUtil.getBeforeLastDayDate();
-        }
-        else if (EnumTime.TIMETYPE.WEEK.key==period) {
+        } else if (EnumTime.TIMETYPE.WEEK.key.equals(period)) {
             createTimeStart = TimeUtil.getBeforeFirstWeekDate();
             createTimeEnd = TimeUtil.getBeforeLastWeekDate();
-        }else if (EnumTime.TIMETYPE.OTHER.key==period){
+        }else if (EnumTime.TIMETYPE.OTHER.key.equals(period)){
             createTimeStart=timeFirst;
             createTimeEnd=timeLast;
         }

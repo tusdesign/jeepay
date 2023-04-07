@@ -31,7 +31,14 @@ public class OrderTestJob extends AbstractAnalysisJob {
             "ee211e16-a63e-46c2-a85c-3fcab4493751"
             , "b874f790-3f55-43ce-900a-5bebddae94d8"
             , "55770282-8b40-41b0-aa8d-de49b1317853"
-            , "08c1a46d-db52-4556-a854-f3bc7ab836ca"};
+            , "08c1a46d-db52-4556-a854-f3bc7ab836ca"
+            ,"14cf0ef4-188a-48f8-a982-64b017154408"
+            ,"c34e8885-fbac-4ccd-9554-c3291ae456f0"
+            , "57f5bd5a-3de4-466f-8a0e-b27e16a31657"
+            ,"570d4681-591c-403a-925a-637c9292ee10"
+            ,"77fb34ae-2070-4666-8c02-a1809d5fca47"
+            ,"17fd308f-6e58-4c8c-8756-2a34cfd0ab96"
+            ,"a3127730-5943-4e5a-9447-ef77af9ed286"};
 
     @Autowired
     private EncryptHelper encryptHelper;
@@ -55,7 +62,6 @@ public class OrderTestJob extends AbstractAnalysisJob {
             put("63b79d68e4b05255970d6f35", "1hk6w5tbtqfc9g4x4iv5ju1vdtl6gbjb48q0p0pimz0c7hgw9ie5bqnsywzramkvcl9b9eaeg8ptzu2msgwx7x5z0h16odrs33ycxqjgd0jxd7z58z4686shobeh490a");
 
         }};
-
         for (Map.Entry<String, String> entry : appMap.entrySet()) {
 
             for (int i = 0; i < 100; i++) {

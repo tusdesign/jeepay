@@ -1,4 +1,4 @@
-package com.jeequan.jeepay.mgr.rqrs;
+package com.jeequan.jeepay.mgr.util;
 
 public class EnumTime {
 
@@ -11,6 +11,7 @@ public class EnumTime {
         OTHER("other", 5);
 
         public String key;
+
         public int value;
 
         private TIMETYPE(String key, int value) {

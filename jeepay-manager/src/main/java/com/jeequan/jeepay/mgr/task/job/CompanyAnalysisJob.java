@@ -1,18 +1,19 @@
 package com.jeequan.jeepay.mgr.task.job;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.cache.RedisUtil;
 import com.jeequan.jeepay.core.entity.OrderStatisticsCompany;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
 import com.jeequan.jeepay.core.entity.SysJob;
-import com.jeequan.jeepay.mgr.rqrs.JobRQ;
+import com.jeequan.jeepay.mgr.util.TimeUtil;
 import com.jeequan.jeepay.service.impl.OrderStatisticsCompanyService;
 import com.jeequan.jeepay.service.impl.OrderStatisticsDeptService;
 import com.jeequan.jeepay.service.impl.PayOrderExtendService;
 import com.jeequan.jeepay.service.impl.PayOrderService;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.RandomStringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +26,12 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.text.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component("companyAnalysisJob")
-@Configuration
 public class CompanyAnalysisJob extends AbstractAnalysisJob {
 
     @Value(value = "${qiDi.gateWay.url}")
@@ -57,29 +55,28 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
     @Autowired
     private OrderStatisticsDeptService orderStatisticsDeptService;
 
+    @Autowired
+    private TimeUtil timeUtil;
 
     /**
      * 根据周期段进行分析
      *
      * @param job 1表示天，2表示周 ，3表示月 4表示年
      */
-    //@Async
+    @SneakyThrows
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Action("企业账单报表分析")
-    public void process(SysJob job) throws Exception {
+    public void process(SysJob job){
 
-        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        JSONObject jsonObject = JSONObject.parseObject(job.getMethodParams());
+        MutablePair<String, String> timePair = this.getPeriod(jsonObject.getString("period")
+                ,Optional.ofNullable(jsonObject.getString("timeStart")).orElse(TimeUtil.getBeforeFirstDayDate())
+                ,Optional.ofNullable(jsonObject.getString("timeEnd")).orElse(TimeUtil.getBeforeLastDayDate()));
 
-        //时间段
-        MutablePair<String, String> timePair = this.getPeriod(job.getMethodParams()
-                , dateFormat.format(job.getTimeStart())
-                , dateFormat.format(job.getTimeEnd()));
+        Long analyseId = System.currentTimeMillis();//产生版本号
 
-        //产生版本号
-        Long analyseId = System.currentTimeMillis();
         List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
-
         if (!CollectionUtil.isEmpty(orderStatisticsDeptList)) {
             orderStatisticsDeptList.forEach(item -> {
                 //去启迪查询部门信息
@@ -116,36 +113,32 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
         }
     }
 
-
     /**
      * 根据部门Id得到部门信息
      *
      * @param deptId
      * @return MutablePair<String, Object>
      */
-    @SneakyThrows()
-    private MutablePair<String, String> getDept(String deptId) {
+    public MutablePair<String, String> getDept(String deptId) {
 
         String[] nameArray;
-
-        //先去缓存中查一下
-        String organization = RedisUtil.getString(deptId);
+        String organization = RedisUtil.getString(deptId);//先去缓存中查一下
         if (organization == null || organization.isEmpty()) {
             HttpHeaders headers = new HttpHeaders();
             headers.add("X-API-KEY", secretKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<String> request =
-                    new HttpEntity<String>(null, headers);
+            HttpEntity<String> request = new HttpEntity<String>(null, headers);
             ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
 
             if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
+
                 Map<String, Object> responseBody = responseMap.getBody();
                 if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
 
                     String fullPath = String.valueOf(responseBody.get("path"));
 
-                    RedisUtil.setString(deptId, fullPath, 30, TimeUnit.DAYS);
+                    RedisUtil.setString(deptId, fullPath, 30, TimeUnit.MINUTES);
 
                     nameArray = StringUtils.split(fullPath, "/");
                     return MutablePair.of(nameArray[0], nameArray[1]);
@@ -154,8 +147,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
         } else {
             nameArray = StringUtils.split(organization, "/");
             return MutablePair.of(nameArray[0], nameArray[1]);
-
         }
-        return MutablePair.of("未知", "未知");
+        return MutablePair.of("", "");
     }
 }

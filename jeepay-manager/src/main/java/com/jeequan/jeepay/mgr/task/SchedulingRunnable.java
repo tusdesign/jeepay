@@ -8,6 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.UUID;
@@ -26,7 +29,8 @@ public class SchedulingRunnable implements Runnable {
 
     private String jobId;
 
-    public SchedulingRunnable(){}
+    public SchedulingRunnable() {
+    }
 
     public SchedulingRunnable(String beanName, String methodName) {
         this(beanName, methodName, null);
@@ -37,30 +41,31 @@ public class SchedulingRunnable implements Runnable {
         this.beanName = beanName;
         this.methodName = methodName;
         this.params = params;
-        this.jobId=UUID.randomUUID().toString();
-        this.job=null;
+        this.jobId = UUID.randomUUID().toString();
+        this.job = null;
 
     }
-    public SchedulingRunnable(String beanName, String methodName, String params,String jobId) {
+
+    public SchedulingRunnable(String beanName, String methodName, String params, String jobId) {
         this.beanName = beanName;
         this.methodName = methodName;
         this.params = params;
-        this.jobId=jobId;
-        this.job=null;
+        this.jobId = jobId;
+        this.job = null;
     }
+
     public SchedulingRunnable(SysJob job) {
         this.beanName = job.getBeanName();
         this.methodName = job.getMethodName();
         this.params = job.getMethodParams();
-        this.jobId=job.getJobId();
-        this.job=job;
+        this.jobId = job.getJobId();
+        this.job = job;
     }
+
     @Override
     public void run() {
 
-        logger.info("定时任务开始执行 - bean：{}，方法：{}，参数：{}", beanName, methodName, params);
         long startTime = System.currentTimeMillis();
-
         try {
             Object target = SpringContextUtils.getBean(beanName);
 
@@ -77,12 +82,11 @@ public class SchedulingRunnable implements Runnable {
             } else {
                 method.invoke(target);
             }
+        } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException ex) {
+            logger.error(String.format("定时任务执行异常 - bean：%s，方法：%s，参数：%s ", beanName, methodName, params), ex);
         } catch (Exception ex) {
             logger.error(String.format("定时任务执行异常 - bean：%s，方法：%s，参数：%s ", beanName, methodName, params), ex);
         }
-
-        long times = System.currentTimeMillis() - startTime;
-        logger.info("定时任务执行结束 - bean：{}，方法：{}，参数：{}，耗时：{} 毫秒", beanName, methodName, params, times);
     }
 
     @Override

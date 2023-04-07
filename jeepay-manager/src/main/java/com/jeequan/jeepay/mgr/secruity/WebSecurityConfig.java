@@ -141,6 +141,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
                 "/**/*.webp",
                 "/*.txt",
                 "/**/*.xls",
+                "/**/*.xlsx",
                 "/**/*.mp4"   //支持mp4格式的文件匿名访问
         )
         .antMatchers(
