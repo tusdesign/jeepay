@@ -36,9 +36,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /*
-* 退款接口： 启迪支付
+* 退款接口： QD支付
 *
-* @author chengzhengwen
+* @author czw
 * @site https://www.jeequan.com
 * @date 2023/02/14 9:38
 */

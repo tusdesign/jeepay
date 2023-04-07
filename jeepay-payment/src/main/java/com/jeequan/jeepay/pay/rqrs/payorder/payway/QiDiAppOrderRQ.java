@@ -9,8 +9,8 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class QiDiAppOrderRQ extends UnifiedOrderRQ {
 
-    /** 启辿支付条码 **/
-    //    @NotBlank(message = "启迪支付条码不能为空")
+    /** 支付条码 **/
+    //    @NotBlank(message = "支付条码不能为空")
     //    private String authCode;
 
     public QiDiAppOrderRQ(){

@@ -37,7 +37,7 @@ public class ReportController {
     }
 
     //下载文件名
-    private final String FILENAMEPREFIX = "玖旺物业入驻企业%s月份费用账单[%s]";
+    private final String FILENAMEPREFIX = "集团物业入驻企业%s月份费用账单[%s]";
 
     //企业账单模板文件
     private final String TENANTTEMPLATE = "TEMPLATE_TENANT-1-1.xlsx";
