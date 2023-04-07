@@ -45,7 +45,7 @@ public class ReportController {
     private final String FILENAMEPREFIX = "玖旺物业入驻企业%s月份费用账单[%s]";
 
     //企业账单模板文件
-    private final String TENANTTEMPLATE = "TEMPLATE_TENANT-1.xlsx";
+    private final String TENANTTEMPLATE = "TEMPLATE_TENANT-1-1.xlsx";
 
     //商户账单模板文件
     private final String MECHANTTEMPLATE = "TEMPLATE_TENANT-2.xlsx";
@@ -57,7 +57,7 @@ public class ReportController {
     @RequestMapping(value = "/tenant/{month}", method = RequestMethod.GET)
     public void excelExport(HttpServletResponse response, @PathVariable int month) throws Exception {
 
-        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenants(month);
+        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenantsV2(month);
         if (accountForTenantRqs.size() > 0) {
             accountForTenantRqs = accountForTenantRqs.stream().sorted(Comparator.comparing(AccountForTenantRq::getGroupName)).collect(Collectors.toList());
         }
@@ -67,7 +67,7 @@ public class ReportController {
         List<Page> page1 = PageService.individual(accountForTenantRqs, sheetNames);
         List<Page> page2 = PageService.individual(accountForTenantRqs, sheetNames);
         page2 = page2.stream().filter(item -> ((AccountForTenantRq) item.getOnlyOne()).getAccountForDepartmentRqs().stream()
-                        .filter(s->s.getOrgAccountTypeDetailMap().size()>0)
+                        .filter(s->s.getOrgAccountDetailMap().size()>0 || s.getTypeDetailMap().size()>0)
                         .findAny().isPresent())
                 .collect(Collectors.toList());
 
