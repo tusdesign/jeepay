@@ -135,16 +135,4 @@ public class TaskController {
         return ApiRes.ok(sysJobList);
     }
 
-
-//    @RequestMapping(value = "/operation", method = RequestMethod.POST)
-//    public ApiRes operation(SysJob existedSysJob) {
-//        SchedulingRunnable task = new SchedulingRunnable(existedSysJob);
-//        if (existedSysJob.getJobStatus().equals(SysJob.NORMAL)) {
-//            cronTaskRegistrar.addCronTask(task, existedSysJob.getCronExpression());
-//        } else {
-//            cronTaskRegistrar.removeCronTask(task);
-//        }
-//        return ApiRes.ok();
-//    }
-
 }

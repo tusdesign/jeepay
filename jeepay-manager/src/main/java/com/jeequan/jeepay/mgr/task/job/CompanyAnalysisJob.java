@@ -63,11 +63,11 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
      *
      * @param job 1表示天，2表示周 ，3表示月 4表示年
      */
-    //@Async
+    @SneakyThrows
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Action("企业账单报表分析")
-    public void process(SysJob job) throws Exception {
+    public void process(SysJob job){
 
         JSONObject jsonObject = JSONObject.parseObject(job.getMethodParams());
         MutablePair<String, String> timePair = this.getPeriod(jsonObject.getString("period")
@@ -129,23 +129,20 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             HttpEntity<String> request = new HttpEntity<String>(null, headers);
-            try {
-                ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
+            ResponseEntity<Map> responseMap = restTemplate.exchange(gateWay + MessageFormat.format("/groups/{0}", deptId), HttpMethod.GET, request, Map.class);
 
-                if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
-                    Map<String, Object> responseBody = responseMap.getBody();
-                    if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
+            if (responseMap.getStatusCode().equals(HttpStatus.OK)) {
 
-                        String fullPath = String.valueOf(responseBody.get("path"));
+                Map<String, Object> responseBody = responseMap.getBody();
+                if (!responseBody.isEmpty() && responseBody.containsKey("path")) {
 
-                        RedisUtil.setString(deptId, fullPath, 30, TimeUnit.DAYS);
+                    String fullPath = String.valueOf(responseBody.get("path"));
 
-                        nameArray = StringUtils.split(fullPath, "/");
-                        return MutablePair.of(nameArray[0], nameArray[1]);
-                    }
+                    RedisUtil.setString(deptId, fullPath, 30, TimeUnit.MINUTES);
+
+                    nameArray = StringUtils.split(fullPath, "/");
+                    return MutablePair.of(nameArray[0], nameArray[1]);
                 }
-            } catch (Exception ex) {
-                log.error("请求部门接口出错:"+ex.getMessage());
             }
         } else {
             nameArray = StringUtils.split(organization, "/");

@@ -1,17 +1,11 @@
 package com.jeequan.jeepay.mgr.ctrl.anon;
 
-import com.jeequan.jeepay.mgr.rqrs.AccountForDepartRq;
 import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
 import com.jeequan.jeepay.mgr.service.Page;
 import com.jeequan.jeepay.mgr.service.PageService;
 import com.jeequan.jeepay.mgr.service.ReportingService;
 import com.jeequan.jeepay.mgr.util.JxlsUtils;
-//import org.apache.commons.lang3.StringUtils;
-//import org.apache.poi.ss.usermodel.*;
-//import org.apache.poi.ss.util.CellRangeAddress;
-//import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Controller;
+
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -55,7 +50,7 @@ public class ReportController {
 
 
     @RequestMapping(value = "/tenant/{month}", method = RequestMethod.GET)
-    public void excelExport(HttpServletResponse response, @PathVariable int month) throws Exception {
+    public void excelExport(HttpServletResponse response, @PathVariable int month) throws IOException {
 
         List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenantsV2(month);
         if (accountForTenantRqs.size() > 0) {
@@ -65,9 +60,8 @@ public class ReportController {
 
         //数据分页转换
         List<Page> page1 = PageService.individual(accountForTenantRqs, sheetNames);
-        List<Page> page2 = PageService.individual(accountForTenantRqs, sheetNames);
-        page2 = page2.stream().filter(item -> ((AccountForTenantRq) item.getOnlyOne()).getAccountForDepartmentRqs().stream()
-                        .filter(s->s.getOrgAccountDetailMap().size()>0 || s.getTypeDetailMap().size()>0)
+        List<Page> page2 = page1.stream().filter(item -> ((AccountForTenantRq) item.getOnlyOne()).getAccountForDepartmentRqs().stream()
+                        .filter(s -> s.getOrgAccountDetailMap().size() > 0 || s.getTypeDetailMap().size() > 0)
                         .findAny().isPresent())
                 .collect(Collectors.toList());
 
@@ -79,39 +73,36 @@ public class ReportController {
         model.put("sheetNames_2", getSheetSlave(page2, month));
 
         // 模板位置，输出流
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/"+TENANTTEMPLATE);
-        ServletOutputStream outputStream=null;
+        ServletOutputStream outputStream = null;
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("templates/" + TENANTTEMPLATE);
 
         try {
 
-            response.setContentType("application/octet-stream;charset=UTF-8");
-            //设置响应头信息header，下载时以文件附件下载
             SimpleDateFormat simpleDate = new SimpleDateFormat("yyyyMMdd");
             Date date = new Date();
             String str = simpleDate.format(date);
             Random rand = new Random();
             int rannum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
-            String fileName = String.format(FILENAMEPREFIX, month, str + rannum) + ".xlsx";
-            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
 
+            String fileName = String.format(FILENAMEPREFIX, month, str + rannum) + ".xlsx";
+
+            //设置响应头信息header，下载时以文件附件下载
+            response.setContentType("application/octet-stream;charset=UTF-8");
+            response.setHeader("Content-Disposition", "attachment;filename=" + fileName);
             outputStream = response.getOutputStream();
 
             JxlsUtils.exportExcel(in, outputStream, model);
 
-            outputStream.flush();
-            outputStream.close();
+        }finally {
 
-        }catch (Exception e){
-            if(in!=null){
+            if (in != null) {
                 in.close();
             }
-            if(outputStream!=null){
+            if (outputStream != null) {
                 outputStream.flush();
                 outputStream.close();
             }
-            e.printStackTrace();
         }
-        System.out.println("完成");
     }
 
     /**
