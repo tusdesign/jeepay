@@ -52,7 +52,7 @@ public class ReportController {
     @RequestMapping(value = "/tenant/{month}", method = RequestMethod.GET)
     public void excelExport(HttpServletResponse response, @PathVariable int month) throws IOException {
 
-        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenantsV2(month);
+        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenants(month);
         if (accountForTenantRqs.size() > 0) {
             accountForTenantRqs = accountForTenantRqs.stream().sorted(Comparator.comparing(AccountForTenantRq::getGroupName)).collect(Collectors.toList());
         }

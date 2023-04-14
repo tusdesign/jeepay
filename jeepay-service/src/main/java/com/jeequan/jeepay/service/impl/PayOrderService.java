@@ -439,6 +439,13 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
                 wrapper.le(PayOrder::getCreatedAt, paramJSON.getString("createdEnd"));
             }
         }
+
+        //根据业务Id查询
+        if (paramJSON != null && StringUtils.isNotEmpty(paramJSON.getString("businessId"))) {
+            wrapper.apply("CASE WHEN JSON_VALID(ext_param) THEN JSON_EXTRACT(ext_param,'$.businessId')={0} ELSE null END"
+                    , paramJSON.getString("businessId"));
+        }
+
         // 三合一订单
         if (paramJSON != null && StringUtils.isNotEmpty(paramJSON.getString("unionOrderId"))) {
             wrapper.and(wr -> {
