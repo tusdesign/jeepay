@@ -37,7 +37,7 @@ public class ReportController {
     }
 
     //下载文件名
-    private final String FILENAMEPREFIX = "玖旺物业入驻企业%s月份费用账单[%s]";
+    private final String FILENAMEPREFIX = "集团物业入驻企业%s月份费用账单[%s]";
 
     //企业账单模板文件
     private final String TENANTTEMPLATE = "TEMPLATE_TENANT-1-1.xlsx";
@@ -52,7 +52,7 @@ public class ReportController {
     @RequestMapping(value = "/tenant/{month}", method = RequestMethod.GET)
     public void excelExport(HttpServletResponse response, @PathVariable int month) throws IOException {
 
-        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenantsV2(month);
+        List<AccountForTenantRq> accountForTenantRqs = reportingService.getAccountForTenants(month);
         if (accountForTenantRqs.size() > 0) {
             accountForTenantRqs = accountForTenantRqs.stream().sorted(Comparator.comparing(AccountForTenantRq::getGroupName)).collect(Collectors.toList());
         }

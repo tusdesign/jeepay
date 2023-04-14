@@ -79,7 +79,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
         List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
         if (!CollectionUtil.isEmpty(orderStatisticsDeptList)) {
             orderStatisticsDeptList.forEach(item -> {
-                //去启迪查询部门信息
+                //查询部门信息
                 MutablePair<String, String> mutablePair = getDept(item.getDeptId());
                 item.setDeptName(mutablePair.right);
                 item.setParentName(mutablePair.left);
