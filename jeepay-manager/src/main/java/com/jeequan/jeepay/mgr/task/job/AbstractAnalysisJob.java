@@ -7,9 +7,16 @@ import org.apache.commons.lang3.tuple.MutablePair;
 
 public abstract class AbstractAnalysisJob {
 
+    /**
+     * 交易类型常量
+     */
+    protected static final String DEALTYPE_DEPARTMENTAL = "DEPARTMENTAL";//部门
+    protected static final String DEALTYPE_PERSONAL = "PERSONAL";//个人
+    protected static final String DEALTYPE_RENT = "RENT";//月租
+
     public abstract void process(SysJob job) throws Exception;
 
-    protected MutablePair<String, String> getPeriod(String period,String timeFirst,String timeLast) throws Exception {
+    protected MutablePair<String, String> getPeriod(String period, String timeFirst, String timeLast) throws Exception {
 
         String createTimeStart = "";//开始时间
         String createTimeEnd = "";//结束时间
@@ -26,11 +33,11 @@ public abstract class AbstractAnalysisJob {
         } else if (EnumTime.TIMETYPE.WEEK.key.equals(period)) {
             createTimeStart = TimeUtil.getBeforeFirstWeekDate();
             createTimeEnd = TimeUtil.getBeforeLastWeekDate();
-        }else if (EnumTime.TIMETYPE.OTHER.key.equals(period)){
-            createTimeStart=timeFirst;
-            createTimeEnd=timeLast;
+        } else if (EnumTime.TIMETYPE.OTHER.key.equals(period)) {
+            createTimeStart = timeFirst;
+            createTimeEnd = timeLast;
         }
-       return MutablePair.of(createTimeStart, createTimeEnd);
+        return MutablePair.of(createTimeStart, createTimeEnd);
     }
 
 }

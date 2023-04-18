@@ -29,11 +29,14 @@ import com.jeequan.jeepay.core.aop.Action;
 import com.jeequan.jeepay.core.aop.MethodLog;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.*;
+import com.jeequan.jeepay.core.exception.BizException;
 import com.jeequan.jeepay.service.mapper.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 
 import java.math.BigDecimal;
@@ -51,6 +54,7 @@ import java.util.*;
 public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
 
     @Autowired private PayOrderMapper payOrderMapper;
+    @Autowired private PayOrderExtendMapper payOrderExtendMapper;
     @Autowired private MchInfoMapper mchInfoMapper;
     @Autowired private IsvInfoMapper isvInfoMapper;
     @Autowired private PayWayMapper payWayMapper;
@@ -367,10 +371,43 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         return payListMap;
     }
 
-    @Action("下单成功记录")
+
+    @Transactional
     public boolean initOrder(PayOrder order)
     {
-       return this.save(order);
+       if(this.save(order)){
+
+           try {
+
+               PayOrderExtend payOrderExtend = new PayOrderExtend();
+               payOrderExtend.setPayOrderId(order.getPayOrderId());
+
+               String extParam = order.getExtParam();
+               if (!ObjectUtils.isEmpty(extParam)) {
+                   JSONObject jsonObject = JSONObject.parseObject(extParam);
+                   if (!StringUtils.isEmpty(jsonObject.getString("businessId"))) {
+                       payOrderExtend.setBusinessId(jsonObject.getString("businessId"));
+                   }
+                   if (!StringUtils.isEmpty(jsonObject.getString("pid"))) {
+                       payOrderExtend.setPid(jsonObject.getString("pid"));
+                   }
+                   if (!StringUtils.isEmpty(jsonObject.getString("dealType"))) {
+                       payOrderExtend.setDealType(jsonObject.getString("dealType"));
+                   }
+                   if (!StringUtils.isEmpty(jsonObject.getString("deptId"))) {
+                       payOrderExtend.setDeptId(jsonObject.getString("deptId"));
+                   }
+                   if (!StringUtils.isEmpty(jsonObject.getString("type"))) {
+                       payOrderExtend.setExtType(jsonObject.getString("type"));
+                   }
+                   return payOrderExtendMapper.insert(payOrderExtend)>0;
+               }
+           }
+           catch (Throwable e){
+               throw new BizException("插入拓展数据时出错:"+e.getMessage());
+           }
+       }
+       return false;
     }
 
     /**
@@ -460,9 +497,10 @@ public class PayOrderService extends ServiceImpl<PayOrderMapper, PayOrder> {
         return page(iPage, wrapper);
     }
 
-    public List<OrderStatisticsDept> selectOrderCountByDept(String createTimeStart,String createTimeEnd)
+    public List<OrderStatisticsDept> selectOrderCountByDept(String createTimeStart,String createTimeEnd,String dealType)
     {
         Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("dealType",dealType);
         paramMap.put("createTimeStart",createTimeStart);
         paramMap.put("createTimeEnd",createTimeEnd);
         return this.getBaseMapper().selectOrderCountByDept(paramMap);
