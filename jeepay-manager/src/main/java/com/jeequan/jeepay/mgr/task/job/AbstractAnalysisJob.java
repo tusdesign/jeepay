@@ -11,6 +11,7 @@ public abstract class AbstractAnalysisJob {
      * 交易类型常量
      */
     protected static final String DEALTYPE_DEPARTMENTAL = "DEPARTMENTAL";//部门
+    protected static final String DEALTYPE_TRANS_DEPARTMENTAL = "TRANS-DEPARTMENTAL";//跨部门
     protected static final String DEALTYPE_PERSONAL = "PERSONAL";//个人
     protected static final String DEALTYPE_RENT = "RENT";//月租
 
