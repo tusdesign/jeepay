@@ -76,7 +76,7 @@ public class CompanyAnalysisJob extends AbstractAnalysisJob {
 
         Long analyseId = System.currentTimeMillis();//产生版本号
 
-        List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right);
+        List<OrderStatisticsDept> orderStatisticsDeptList = payOrderService.selectOrderCountByDept(timePair.left, timePair.right,this.DEALTYPE_DEPARTMENTAL);
         if (!CollectionUtil.isEmpty(orderStatisticsDeptList)) {
             orderStatisticsDeptList.forEach(item -> {
                 //查询部门信息
