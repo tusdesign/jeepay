@@ -1,11 +1,18 @@
 package com.jeequan.jeepay.mgr.ctrl.anon;
 
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.model.ApiRes;
+import com.jeequan.jeepay.mgr.ctrl.CommonCtrl;
 import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
+import com.jeequan.jeepay.mgr.service.FlowOrderService;
 import com.jeequan.jeepay.mgr.service.Page;
 import com.jeequan.jeepay.mgr.service.PageService;
 import com.jeequan.jeepay.mgr.service.ReportingService;
 import com.jeequan.jeepay.mgr.util.JxlsUtils;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -28,12 +35,14 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/anon/report")
-public class ReportController {
+public class ReportController extends CommonCtrl {
 
     private final ReportingService reportingService;
+    private final FlowOrderService flowOrderService;
 
-    public ReportController(ReportingService reportingService) {
+    public ReportController(ReportingService reportingService, FlowOrderService flowOrderService) {
         this.reportingService = reportingService;
+        this.flowOrderService = flowOrderService;
     }
 
     //下载文件名
@@ -128,4 +137,19 @@ public class ReportController {
         return al;
     }
 
+
+    /**
+     * @author: chengzw
+     * @date: 2023/5/5 16:15
+     * @describe: 订单流水导出
+     */
+    @RequestMapping(value = "/export", method = RequestMethod.GET)
+    public void export() {
+
+        PayOrder payOrder = getObject(PayOrder.class);
+        JSONObject paramJSON = getReqParamJSON();
+        LambdaQueryWrapper<PayOrder> wrapper = PayOrder.gw();
+
+        flowOrderService.exportFlowOrder(payOrder, paramJSON, wrapper);
+    }
 }
