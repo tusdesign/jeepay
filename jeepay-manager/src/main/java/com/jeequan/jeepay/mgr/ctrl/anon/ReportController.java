@@ -38,11 +38,9 @@ import java.util.stream.Collectors;
 public class ReportController extends CommonCtrl {
 
     private final ReportingService reportingService;
-    private final FlowOrderService flowOrderService;
 
-    public ReportController(ReportingService reportingService, FlowOrderService flowOrderService) {
+    public ReportController(ReportingService reportingService) {
         this.reportingService = reportingService;
-        this.flowOrderService = flowOrderService;
     }
 
     //下载文件名
@@ -137,19 +135,4 @@ public class ReportController extends CommonCtrl {
         return al;
     }
 
-
-    /**
-     * @author: chengzw
-     * @date: 2023/5/5 16:15
-     * @describe: 订单流水导出
-     */
-    @RequestMapping(value = "/export", method = RequestMethod.GET)
-    public void export() {
-
-        PayOrder payOrder = getObject(PayOrder.class);
-        JSONObject paramJSON = getReqParamJSON();
-        LambdaQueryWrapper<PayOrder> wrapper = PayOrder.gw();
-
-        flowOrderService.exportFlowOrder(payOrder, paramJSON, wrapper);
-    }
 }

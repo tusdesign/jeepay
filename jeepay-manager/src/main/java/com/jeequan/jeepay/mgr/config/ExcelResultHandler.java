@@ -1,6 +1,8 @@
 package com.jeequan.jeepay.mgr.config;
 
+import com.jeequan.jeepay.core.exception.BizException;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.reflection.Reflector;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
@@ -28,9 +30,8 @@ import java.util.zip.ZipOutputStream;
 import java.util.zip.ZipEntry;
 
 
+@Slf4j
 public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private AtomicInteger currentRowNumber = new AtomicInteger(0);//记录当前excel行号，从0开始
     private Sheet sheet = null;
@@ -89,8 +90,7 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
     /**
      * 导出
      */
-    @SneakyThrows
-    public void ExportExcel() {
+    public void ExportExcel() throws IOException {
 
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
         ZipOutputStream zos = null;
@@ -98,11 +98,21 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
 
         try {
 
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment;filename=" + new String((exportFileName + ".zip").replaceAll(" ", "").getBytes("utf-8"), "iso8859-1"));
+            SimpleDateFormat simpleDate = new SimpleDateFormat("yyyyMMdd");
+            Date date = new Date();
+            String str = simpleDate.format(date);
+            Random rand = new Random();
+            int rannum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
+
+            response.setContentType("application/x-download");
+            if (isExportZip) {
+                response.setHeader("Content-Disposition", "attachment;filename=" + new String((exportFileName + str + rannum + ".zip").replaceAll(" ", "").getBytes("GBK"), "iso8859-1"));
+            } else {
+                response.addHeader("Content-Disposition", "attachment;filename=" + new String((exportFileName + str + rannum + ".xlsx").replaceAll(" ", "").getBytes("GBK"), "iso8859-1"));
+            }
             os = new BufferedOutputStream(response.getOutputStream());
 
-            //如果设置成了导出成Zip，格式加上三行以下代码进行Zip的处理
+            //如果设置成了导出成Zip则进行Zip的处理
             if (isExportZip) {
                 zos = new ZipOutputStream(os);
                 ZipEntry zipEntry = new ZipEntry(new String((exportFileName + ".xlsx").replaceAll(" ", "")));
@@ -111,8 +121,8 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
 
             Workbook wb = new XSSFWorkbook();
             sheet = wb.createSheet("Sheet 1");
-
             Row row = sheet.createRow(0);
+
             for (int cellNumber = 0; cellNumber < totalCellNumber; cellNumber++) {
                 Cell cell = row.createCell(cellNumber);
                 cell.setCellValue(headerArray.get(cellNumber)); //写入表头数据
@@ -122,36 +132,41 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
             tryFetchDataAndWriteToExcel();
 
             //最后打印一下最终写入的行数
-            logger.info("--------->>>> write to excel size now is {}", currentRowNumber.get());
+            //log.info("--------->>>> write to excel size now is {}", currentRowNumber.get());
 
             if (isExportZip) {
-                ByteArrayOutputStream bos=new ByteArrayOutputStream();
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 wb.write(bos);
                 bos.writeTo(zos);
             } else {
                 wb.write(os);
             }
             wb.close();
-        } catch (Exception e) {
-            logger.error("error", e);
         } finally {
+
             if (isExportZip) {
-                if (zos != null) {
-                    zos.closeEntry();
+                try {
+                    if (zos != null) zos.closeEntry();
                     zos.close();
+                } catch (IOException e1) {
+                    throw new BizException("下载订单流水出错:" + e1.getMessage());
                 }
             } else {
-                if (os != null) os.close();
+                try {
+                    if (os != null) os.close();
+                } catch (IOException e1) {
+                    throw new BizException("下载订单流水出错:" + e1.getMessage());
+                }
             }
+
         }
     }
 
-    //写入一行数据到excel中,ResultHandler中遍历时进行回调调用
     public void callBackWriteRowDataToExcel(Object RowData) throws IllegalAccessException {
         Field[] fields = RowData.getClass().getDeclaredFields();
 
-        currentRowNumber.incrementAndGet();//先将行号增加
-        Row row = sheet.createRow(currentRowNumber.get());//创建excel中新的一行
+        currentRowNumber.incrementAndGet();
+        Row row = sheet.createRow(currentRowNumber.get());
         for (int cellNumber = 0; cellNumber < totalCellNumber; cellNumber++) {
 
             Object value = null;
@@ -169,15 +184,15 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
             Cell cell = row.createCell(cellNumber);
 
             if (value != null && value instanceof Date) {
-                cell.setCellValue(sdf.format(value));//
+                cell.setCellValue(sdf.format(value));
             } else {
                 cell.setCellValue(value == null ? "" : value.toString());
             }
         }
-        //每写入5000条就打印一下
-        if (currentRowNumber.get() % 5000 == 0) {
-            logger.info("--------->>>> write to excel size now is {}", currentRowNumber.get());
-        }
+//        //测试:每写入5000条就打印一下
+//        if (currentRowNumber.get() % 5000 == 0) {
+//            log.info("--------->>>> write to excel size now is {}", currentRowNumber.get());
+//        }
     }
 
 }

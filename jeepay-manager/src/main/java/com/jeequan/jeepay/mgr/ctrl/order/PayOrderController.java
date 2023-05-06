@@ -42,6 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +66,8 @@ public class PayOrderController extends CommonCtrl {
     private SysConfigService sysConfigService;
     @Autowired
     private MchAppService mchAppService;
-//    @Autowired
-//    private FlowOrderService flowOrderService;
+    @Autowired
+    private FlowOrderService flowOrderService;
 
     /**
      * @author: pangxiaoyu
@@ -99,23 +100,23 @@ public class PayOrderController extends CommonCtrl {
         return ApiRes.page(pages);
     }
 
-//    /**
-//     * @author: chengzw
-//     * @date: 2023/5/5 16:15
-//     * @describe: 订单流水导出
-//     */
-//    @PreAuthorize("hasAuthority('ENT_ORDER_LIST')")
-//    @RequestMapping(value = "/export", method = RequestMethod.GET)
-//    public ApiRes export() {
-//
-//        PayOrder payOrder = getObject(PayOrder.class);
-//        JSONObject paramJSON = getReqParamJSON();
-//        LambdaQueryWrapper<PayOrder> wrapper = PayOrder.gw();
-//
-//        flowOrderService.exportFlowOrder(payOrder, paramJSON, wrapper);
-//
-//        return ApiRes.ok();
-//    }
+    /**
+     * @author: chengzw
+     * @date: 2023/5/5 16:15
+     * @describe: 订单流水导出
+     */
+    @PreAuthorize("hasAuthority('ENT_ORDER_LIST')")
+    @RequestMapping(value = "/export", method = RequestMethod.GET)
+    public ApiRes export() throws IOException {
+
+        PayOrder payOrder = getObject(PayOrder.class);
+        JSONObject paramJSON = getReqParamJSON();
+        LambdaQueryWrapper<PayOrder> wrapper = PayOrder.gw();
+
+        flowOrderService.exportFlowOrder(payOrder, paramJSON, wrapper);
+
+        return ApiRes.ok();
+    }
 
 
     /**
