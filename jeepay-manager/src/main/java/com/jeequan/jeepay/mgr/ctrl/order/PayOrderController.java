@@ -43,6 +43,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,15 +108,13 @@ public class PayOrderController extends CommonCtrl {
      */
     @PreAuthorize("hasAuthority('ENT_ORDER_LIST')")
     @RequestMapping(value = "/export", method = RequestMethod.GET)
-    public ApiRes export() throws IOException {
+    public void export() throws IOException, ParseException {
 
         PayOrder payOrder = getObject(PayOrder.class);
         JSONObject paramJSON = getReqParamJSON();
         LambdaQueryWrapper<PayOrder> wrapper = PayOrder.gw();
 
         flowOrderService.exportFlowOrder(payOrder, paramJSON, wrapper);
-
-        return ApiRes.ok();
     }
 
 

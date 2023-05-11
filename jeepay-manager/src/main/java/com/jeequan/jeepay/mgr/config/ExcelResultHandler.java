@@ -3,23 +3,17 @@ package com.jeequan.jeepay.mgr.config;
 import com.jeequan.jeepay.core.exception.BizException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.reflection.Reflector;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import sun.reflect.MethodAccessor;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
@@ -78,7 +72,7 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
 
     }
 
-    //出象方法，提供给子类进行实现，遍历写入数据到excel
+    //抽象方法，提供给子类进行实现，遍历写入数据到excel
     public abstract void tryFetchDataAndWriteToExcel();
 
     @SneakyThrows
@@ -87,78 +81,79 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
         callBackWriteRowDataToExcel(aRowData);
     }
 
+
     /**
      * 导出
      */
     public void ExportExcel() throws IOException {
 
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+
         ZipOutputStream zos = null;
         OutputStream os = null;
 
         try {
-
+            //写入文件
             SimpleDateFormat simpleDate = new SimpleDateFormat("yyyyMMdd");
             Date date = new Date();
             String str = simpleDate.format(date);
-            Random rand = new Random();
-            int rannum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
 
-            response.setContentType("application/x-download");
-            if (isExportZip) {
-                response.setHeader("Content-Disposition", "attachment;filename=" + new String((exportFileName + str + rannum + ".zip").replaceAll(" ", "").getBytes("GBK"), "iso8859-1"));
-            } else {
-                response.addHeader("Content-Disposition", "attachment;filename=" + new String((exportFileName + str + rannum + ".xlsx").replaceAll(" ", "").getBytes("GBK"), "iso8859-1"));
-            }
+            Random rand = new Random();
+            int ranNum = (int) (rand.nextDouble() * (99999 - 10000 + 1) + 10000);
+
+            String fileName = isExportZip ? exportFileName + str + ranNum + ".zip" : exportFileName + str + ranNum + ".xlsx";
+
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + new String(fileName.replaceAll(" ", "").getBytes("utf-8"), "iso8859-1"));
             os = new BufferedOutputStream(response.getOutputStream());
 
-            //如果设置成了导出成Zip则进行Zip的处理
+            //如果true则进行zip压缩处理
             if (isExportZip) {
                 zos = new ZipOutputStream(os);
                 ZipEntry zipEntry = new ZipEntry(new String((exportFileName + ".xlsx").replaceAll(" ", "")));
                 zos.putNextEntry(zipEntry);
             }
 
-            Workbook wb = new XSSFWorkbook();
-            sheet = wb.createSheet("Sheet 1");
-            Row row = sheet.createRow(0);
+            SXSSFWorkbook wb = new SXSSFWorkbook();
+            wb.setCompressTempFiles(false);
+            sheet = wb.createSheet("数据列表");
 
+            //写入表头，Rows从0开始.
+            Row row = sheet.createRow(0);
             for (int cellNumber = 0; cellNumber < totalCellNumber; cellNumber++) {
                 Cell cell = row.createCell(cellNumber);
-                cell.setCellValue(headerArray.get(cellNumber)); //写入表头数据
+                cell.setCellValue(headerArray.get(cellNumber));
             }
 
-            //获取数据进行遍历并写入excel
+            //写入数据
+            //调用具体的实现子类进行遍历并写入excel
             tryFetchDataAndWriteToExcel();
 
-            //最后打印一下最终写入的行数
-            //log.info("--------->>>> write to excel size now is {}", currentRowNumber.get());
-
+            //Write excel to a file
             if (isExportZip) {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                wb.write(bos);
-                bos.writeTo(zos);
+                wb.write(zos);
             } else {
                 wb.write(os);
             }
+
+            if (wb != null) {
+                wb.dispose();
+            }
             wb.close();
         } finally {
-
             if (isExportZip) {
                 try {
-                    if (zos != null) zos.closeEntry();
-                    zos.close();
+                    if (zos != null) { zos.flush(); zos.close();}
                 } catch (IOException e1) {
                     throw new BizException("下载订单流水出错:" + e1.getMessage());
                 }
             } else {
                 try {
-                    if (os != null) os.close();
+                    if (os != null){  os.flush();os.close();}
                 } catch (IOException e1) {
                     throw new BizException("下载订单流水出错:" + e1.getMessage());
                 }
             }
-
         }
     }
 

@@ -3,7 +3,9 @@ package com.jeequan.jeepay.mgr.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.jeequan.jeepay.core.constants.ApiCodeEnum;
 import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.exception.BizException;
 import com.jeequan.jeepay.mgr.config.ExcelResultHandler;
 import com.jeequan.jeepay.service.mapper.PayOrderMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -11,6 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,7 +26,7 @@ public class FlowOrderService {
     @Autowired
     private PayOrderMapper payOrderMapper;
 
-    public void exportFlowOrder(PayOrder payOrder, JSONObject paramJSON, LambdaQueryWrapper<PayOrder> wrapper) throws IOException {
+    public void exportFlowOrder(PayOrder payOrder, JSONObject paramJSON, LambdaQueryWrapper<PayOrder> wrapper) throws IOException, ParseException {
 
         List<String> headerArray = Arrays.asList("支付订单号", "商户号", "服务商号", "应用ID", "商户名称", "商户模式", "商户订单号", "支付接口代码", "支付方式代码", "支付金额,单位分", "商户手续费费率", "商户手续费", "货币代码",
                 "支付状态", "回调状态", "客户端IP", "商品标题", "描述信息", "额外参数", "渠道用户标识", "渠道订单号", "退款状态", "退款次数", "退款总金额", "分账模式", "分账状态",
@@ -61,21 +67,33 @@ public class FlowOrderService {
         if (payOrder.getDivisionState() != null) {
             wrapper.eq(PayOrder::getDivisionState, payOrder.getDivisionState());
         }
+
         if (paramJSON != null) {
-            if (StringUtils.isNotEmpty(paramJSON.getString("createdStart"))) {
-                wrapper.ge(PayOrder::getCreatedAt, paramJSON.getString("createdStart"));
-            }
-            if (StringUtils.isNotEmpty(paramJSON.getString("createdEnd"))) {
-                wrapper.le(PayOrder::getCreatedAt, paramJSON.getString("createdEnd"));
+
+            final String createdStart = paramJSON.getString("createdStart");
+            final String createEnd = paramJSON.getString("createdEnd");
+
+            if (StringUtils.isEmpty(createdStart) || StringUtils.isEmpty(createEnd)) {
+                throw new BizException("查询时间段应为有效的时间范围!");
+            } else {
+
+                DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                LocalDateTime startTime = LocalDateTime.parse(createdStart, df);
+                LocalDateTime endTime = LocalDateTime.parse(createEnd, df);
+
+                int monthNum = Period.between(startTime.toLocalDate(), endTime.toLocalDate()).getMonths();
+                if (monthNum > 1) {
+                    throw new BizException("订单查询超出时间范围!");
+                }
+                wrapper.ge(PayOrder::getCreatedAt, createdStart);
+                wrapper.le(PayOrder::getCreatedAt, createEnd);
             }
         }
-
         //根据业务Id查询
         if (paramJSON != null && StringUtils.isNotEmpty(paramJSON.getString("businessId"))) {
             wrapper.apply("CASE WHEN JSON_VALID(ext_param) THEN JSON_EXTRACT(ext_param,'$.businessId')={0} ELSE null END"
                     , paramJSON.getString("businessId"));
         }
-
         // 三合一订单
         if (paramJSON != null && StringUtils.isNotEmpty(paramJSON.getString("unionOrderId"))) {
             wrapper.and(wr -> {
@@ -93,7 +111,6 @@ public class FlowOrderService {
                 payOrderMapper.streamQuery(wrapper, this);
             }
         };
-
         handler.ExportExcel();
     }
 }
