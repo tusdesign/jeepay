@@ -110,7 +110,7 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
             //如果true则进行zip压缩处理
             if (isExportZip) {
                 zos = new ZipOutputStream(os);
-                ZipEntry zipEntry = new ZipEntry(new String((exportFileName + ".xlsx").replaceAll(" ", "")));
+                ZipEntry zipEntry = new ZipEntry(new String((exportFileName + str + ranNum + ".xlsx").replaceAll(" ", "")));
                 zos.putNextEntry(zipEntry);
             }
 
@@ -129,30 +129,20 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
             //调用具体的实现子类进行遍历并写入excel
             tryFetchDataAndWriteToExcel();
 
-            //Write excel to a file
             if (isExportZip) {
                 wb.write(zos);
             } else {
                 wb.write(os);
             }
 
-            if (wb != null) {
-                wb.dispose();
-            }
+            wb.dispose();
             wb.close();
+
         } finally {
             if (isExportZip) {
-                try {
-                    if (zos != null) { zos.flush(); zos.close();}
-                } catch (IOException e1) {
-                    throw new BizException("下载订单流水出错:" + e1.getMessage());
-                }
+                if (zos != null) { zos.flush(); zos.close();}
             } else {
-                try {
-                    if (os != null){  os.flush();os.close();}
-                } catch (IOException e1) {
-                    throw new BizException("下载订单流水出错:" + e1.getMessage());
-                }
+                if (os != null){  os.flush();os.close();}
             }
         }
     }
@@ -184,10 +174,6 @@ public abstract class ExcelResultHandler<T> implements ResultHandler<T> {
                 cell.setCellValue(value == null ? "" : value.toString());
             }
         }
-//        //测试:每写入5000条就打印一下
-//        if (currentRowNumber.get() % 5000 == 0) {
-//            log.info("--------->>>> write to excel size now is {}", currentRowNumber.get());
-//        }
     }
 
 }
