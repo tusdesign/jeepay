@@ -1,5 +1,6 @@
 package com.jeequan.jeepay.mgr.ctrl.anon;
 
+import com.jeequan.jeepay.mgr.ctrl.CommonCtrl;
 import com.jeequan.jeepay.mgr.rqrs.AccountForTenantRq;
 import com.jeequan.jeepay.mgr.service.Page;
 import com.jeequan.jeepay.mgr.service.PageService;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/anon/report")
-public class ReportController {
+public class ReportController extends CommonCtrl {
 
     private final ReportingService reportingService;
 

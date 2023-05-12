@@ -15,10 +15,17 @@
  */
 package com.jeequan.jeepay.service.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.jeequan.jeepay.core.entity.OrderStatisticsDept;
 import com.jeequan.jeepay.core.entity.PayOrder;
+import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.ResultType;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.mapping.ResultSetType;
+import org.apache.ibatis.session.ResultHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -47,4 +54,10 @@ public interface PayOrderMapper extends BaseMapper<PayOrder> {
 
     /** 更新订单退款金额和次数 **/
     int updateRefundAmountAndCount(@Param("payOrderId") String payOrderId, @Param("currentRefundAmount") Long currentRefundAmount);
+
+
+    @Select("select * from t_pay_order ${ew.customSqlSegment}")
+    @Options(resultSetType = ResultSetType.FORWARD_ONLY, fetchSize = Integer.MIN_VALUE)
+    @ResultType(PayOrder.class)
+    void streamQuery(@Param(Constants.WRAPPER) Wrapper<PayOrder> queryWrapper, ResultHandler<PayOrder> handler);
 }
