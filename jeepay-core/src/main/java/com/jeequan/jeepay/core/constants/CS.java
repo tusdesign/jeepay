@@ -181,6 +181,9 @@ public class CS {
         String PP_PC = "PP_PC"; // Paypal 支付
 
         String QIDI_APP = "QIDI_APP";  //QiDi-APP支付
+
+        String CHINA_PC ="CHINA_PC"; //银联 pc端支付
+        String CHINA_QR ="CHINA_QR";//银联 二难码付款
     }
 
     //支付数据包 类型
