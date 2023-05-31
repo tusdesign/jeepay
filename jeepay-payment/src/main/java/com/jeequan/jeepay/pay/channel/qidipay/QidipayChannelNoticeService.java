@@ -51,7 +51,7 @@ public class QidipayChannelNoticeService extends AbstractChannelNoticeService {
             String checkSign = jsonParams.getString("sign");
             jsonParams.remove("sign");
             // 验证签名
-            if (!checkSign.equals(XxpayKit.getSign(jsonParams, qidipayNormalMchParams.getKey()))) {
+            if (!checkSign.equals(XxpayKit.getSign(jsonParams, qidipayNormalMchParams.getSecret()))) {
                 throw ResponseException.buildText("ERROR");
             }
 

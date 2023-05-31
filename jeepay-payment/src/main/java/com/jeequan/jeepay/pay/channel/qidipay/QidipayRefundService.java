@@ -76,7 +76,7 @@ public class QidipayRefundService extends AbstractRefundService {
         paramMap.put("remarkInfo", refundOrder.getRefundReason());   // 退款原因
 
         // 生成签名
-        String sign = XxpayKit.getSign(paramMap, params.getKey());
+        String sign = XxpayKit.getSign(paramMap, params.getSecret());
         paramMap.put("sign", sign);
         // 退款地址
         String refundUrl = XxpayKit.getRefundUrl(params.getPayUrl())+ "?" + JeepayKit.genUrlParams(paramMap);
@@ -145,7 +145,7 @@ public class QidipayRefundService extends AbstractRefundService {
         paramMap.put("mchRefundNo", refundOrder.getRefundOrderId());   //商户退款单号
 
         // 生成签名
-        String sign = XxpayKit.getSign(paramMap, params.getKey());
+        String sign = XxpayKit.getSign(paramMap, params.getSecret());
         paramMap.put("sign", sign);
         // 退款查询地址
         String queryRefundOrderUrl = XxpayKit.getQueryRefundOrderUrl(params.getPayUrl())+ "?" + JeepayKit.genUrlParams(paramMap);
@@ -174,7 +174,7 @@ public class QidipayRefundService extends AbstractRefundService {
         // 验证响应数据签名
         String checkSign = resObj.getString("sign");
         resObj.remove("sign");
-        if(!checkSign.equals(XxpayKit.getSign(resObj, params.getKey()))) {
+        if(!checkSign.equals(XxpayKit.getSign(resObj, params.getSecret()))) {
             channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
             return null;
         }
