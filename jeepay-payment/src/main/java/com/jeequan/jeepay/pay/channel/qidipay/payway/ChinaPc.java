@@ -5,6 +5,8 @@ import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 
 import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
+import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.qidipay.QidipayPaymentService;
 import com.jeequan.jeepay.pay.channel.qidipay.utils.ChinaPayUtil;
 import com.jeequan.jeepay.pay.model.MchAppConfigContext;
@@ -42,6 +44,8 @@ public class ChinaPc extends QidipayPaymentService {
 
         log.info("####################开始支付####################");
 
+        QidipayNormalMchParams params = (QidipayNormalMchParams)configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
+
         ChinaPcOrderRQ bizRQ = (ChinaPcOrderRQ) rq;
         ChinaPcOrderRS res = ApiResBuilder.buildSuccess(ChinaPcOrderRS.class);
         ChannelRetMsg channelRetMsg = new ChannelRetMsg();
@@ -53,23 +57,23 @@ public class ChinaPc extends QidipayPaymentService {
 
         Map<String, Object> paramMap = new TreeMap<>();
         Date nowDate = new Date();
-        paramMap.put("Version", "20140728");
+        paramMap.put("Version",params.getPayVersion());
         paramMap.put("AccessType","0"); //接入类型  0：商户身份接入（默认）1：机构身份接入
-        paramMap.put("MerId", "000091908248636");
-        paramMap.put("MerOrderNo", "换成订单流水号");
+        paramMap.put("MerId", params.getMchId());
+        paramMap.put("MerOrderNo",bizRQ.getMchOrderNo());
         paramMap.put("TranDate", dateFormat.format(new Date()));
         paramMap.put("TranTime", timeFormat.format(new Date()));
-        paramMap.put("OrderAmt", "1");//单位：分
+        paramMap.put("OrderAmt", bizRQ.getAmount());//单位：分
         paramMap.put("BusiType", "0001");//业务类型，固定值
-        paramMap.put("CommodityMsg","大米100斤");
+        paramMap.put("CommodityMsg",bizRQ.getBody());
 
         paramMap.put("MerBgUrl", getNotifyUrl());
         paramMap.put("MerPageUrl", bizRQ.getReturnUrl());
-        paramMap.put("RemoteAddr", "xxxIP");
+        paramMap.put("RemoteAddr", bizRQ.getClientIp());
 
         System.out.println("==============订单号===========:"+paramMap.get("MerOrderNo"));
 
-        SecssUtil secssUtil = ChinaPayUtil.secssUtil;
+        SecssUtil secssUtil = ChinaPayUtil.init(params);
         secssUtil.sign(paramMap);
         if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode()))
         {
