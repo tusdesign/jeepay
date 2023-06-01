@@ -42,8 +42,6 @@ public class ChinaPc extends QidipayPaymentService {
     @Override
     public AbstractRS pay(UnifiedOrderRQ rq, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-        log.info("####################开始支付####################");
-
         QidipayNormalMchParams params = (QidipayNormalMchParams)configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
         ChinaPcOrderRQ bizRQ = (ChinaPcOrderRQ) rq;
