@@ -17,6 +17,8 @@ package com.jeequan.jeepay.pay.channel.qidipay;
 
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.chinapay.secss.SecssConstants;
+import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.entity.RefundOrder;
@@ -24,6 +26,7 @@ import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
 import com.jeequan.jeepay.core.utils.JeepayKit;
 import com.jeequan.jeepay.pay.channel.AbstractRefundService;
+import com.jeequan.jeepay.pay.channel.qidipay.utils.ChinaPayUtil;
 import com.jeequan.jeepay.pay.channel.xxpay.XxpayKit;
 import com.jeequan.jeepay.pay.model.MchAppConfigContext;
 import com.jeequan.jeepay.pay.rqrs.msg.ChannelRetMsg;
@@ -32,6 +35,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -59,79 +64,51 @@ public class QidipayRefundService extends AbstractRefundService {
     @Override
     public ChannelRetMsg refund(RefundOrderRQ bizRQ, RefundOrder refundOrder, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-
-        QidipayNormalMchParams params = (QidipayNormalMchParams)configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
-
-        // 构造支付请求参数
-        Map<String,Object> paramMap = new TreeMap();
-        paramMap.put("mchId", params.getMchId());  //商户ID
-        paramMap.put("mchOrderNo", refundOrder.getPayOrderId());   //支付订单-商户订单号
-        paramMap.put("mchRefundNo", refundOrder.getRefundOrderId());   //商户退款单号
-        paramMap.put("amount", refundOrder.getRefundAmount());   //退款金额
-        paramMap.put("currency", "cny");   //币种
-        paramMap.put("clientIp", refundOrder.getClientIp());   //客户端IP
-        paramMap.put("device", "web");   //客户端设备
-        //如果notifyUrl 不为空表示异步退款，具体退款结果以退款通知为准
-        paramMap.put("notifyUrl", getNotifyUrl(refundOrder.getRefundOrderId()));   // 异步退款通知
-        paramMap.put("remarkInfo", refundOrder.getRefundReason());   // 退款原因
-
-        // 生成签名
-        String sign = XxpayKit.getSign(paramMap, params.getSecret());
-        paramMap.put("sign", sign);
-        // 退款地址
-        String refundUrl = XxpayKit.getRefundUrl(params.getPayUrl())+ "?" + JeepayKit.genUrlParams(paramMap);
-        String resStr = "test";
-        try {
-            log.info("发起退款[{}]参数：{}", getIfCode(), refundUrl);
-            //resStr = HttpUtil.createPost(refundUrl).timeout(60 * 1000).execute().body();
-            log.info("发起退款[{}]结果：{}", getIfCode(), resStr);
-        } catch (Exception e) {
-            log.error("http error", e);
-        }
+        QidipayNormalMchParams normalMchParams = (QidipayNormalMchParams)configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
         ChannelRetMsg channelRetMsg = new ChannelRetMsg();
-        // 默认退款中状态
-        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
+        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);// 默认退款中状态
 
-//        if(StringUtils.isEmpty(resStr)) {
-//            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-//            channelRetMsg.setChannelErrCode("");
-//            channelRetMsg.setChannelErrMsg("请求"+getIfCode()+"接口异常");
-//            return null;
-//        }
-//
-//        JSONObject resObj = JSONObject.parseObject(resStr);
-//        if(!"0".equals(resObj.getString("retCode"))){
-//            String retMsg = resObj.getString("retMsg");
-//            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-//            channelRetMsg.setChannelErrCode("");
-//            channelRetMsg.setChannelErrMsg(retMsg);
-//            return null;
-//        }
+        JSONObject reqParams = new JSONObject();
+        reqParams.put("Version", normalMchParams.getPayVersion());
+        reqParams.put("MerId", refundOrder.getMchNo());
+        reqParams.put("MerOrderNo", refundOrder.getMchRefundNo());
 
-        // 验证响应数据签名
-//        String checkSign = resObj.getString("sign");
-//        resObj.remove("sign");
-//        if(!checkSign.equals(XxpayKit.getSign(resObj, params.getKey()))) {
-//            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-//            return null;
-//        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
 
-        // 退款状态:0-订单生成,1-退款中,2-退款成功,3-退款失败
-//        String status = resObj.getString("status");
-//        if("2".equals(status)) {
-//            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
-//        }else if("3".equals(status)) {
-//            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-//            channelRetMsg.setChannelErrMsg(resObj.getString("retMsg"));
-//        }
+        reqParams.put("TranDate", dateFormat.format(new Date()));
+        reqParams.put("TranTime", timeFormat.format(new Date()));
+        reqParams.put("OriOrderNo", payOrder.getMchOrderNo());//原始交易订单号
+        reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));//原始交易日期
+        reqParams.put("TranType","0401");//退款交易
+        reqParams.put("BusiType","0001");
+        reqParams.put("MerBgUrl",getNotifyUrl());
 
-        //没用实际与支付打通，暂设为成功
-        if(channelRetMsg.getChannelState()!=ChannelRetMsg.ChannelState.CONFIRM_SUCCESS){
-            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
+        SecssUtil secssUtil = ChinaPayUtil.init(normalMchParams);
+        secssUtil.sign(reqParams);
+        if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+            channelRetMsg.setChannelErrCode(secssUtil.getErrCode());
+            channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
         }
-        return channelRetMsg;
+        secssUtil.sign(reqParams);
+        String signature = secssUtil.getSign();
+        reqParams.put("Signature", signature);
 
+        String resp = HttpUtil.post("payQueryUrl", reqParams,60000);
+        log.info("################交易查询结果：{}", resp);
+
+        //解析同步应答字段
+        Map<String, String> resultMap = ChinaPayUtil.getResponseMap(resp);
+
+        //返回数据验签
+        boolean verifyFlag = ChinaPayUtil.verifyNotify(resultMap, normalMchParams);
+        if (!verifyFlag) {
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+        }
+        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
+        return channelRetMsg;
     }
 
     @Override

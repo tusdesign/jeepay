@@ -3,6 +3,7 @@ package com.jeequan.jeepay.pay.channel.qidipay.payway;
 import cn.hutool.extra.qrcode.QrCodeUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
@@ -57,6 +58,7 @@ public class ChinaQr extends QidipayPaymentService {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
+
         Date current = new Date();
         Map<String, String> orderReserveMap = new HashMap<>();
         orderReserveMap.put("OrderType", "0001");
@@ -86,8 +88,7 @@ public class ChinaQr extends QidipayPaymentService {
         SecssUtil secssUtil = ChinaPayUtil.init(params);
         secssUtil.sign(submitFromData);
         if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-            log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
-
+            //log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
             channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
             channelRetMsg.setChannelErrCode("9999");
             channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
@@ -98,47 +99,56 @@ public class ChinaQr extends QidipayPaymentService {
 
         String httpRes = HttpUtil.post("chinaPayConstants.PAY_SEND_URL", submitFromData, 60000);
 
-        //解析同步应答字段
         String codeUrl = StringUtils.EMPTY;
         Map<String, String> resultMap = ChinaPayUtil.getResponseMap(httpRes);
 
-        String respCode = (String) resultMap.get("respCode");
-        if ("0000".equals(respCode)) {
+        String respCode = resultMap.get("respCode");//应答码
+        String respMsg = resultMap.get("respMsg");//应答信息
 
-            boolean verifyFlag = ChinaPayUtil.verifyNotify(resultMap, params);
-            if (!verifyFlag) {
-                log.error("ChinaPay支付查询--返回数据验签失败！");
-                channelRetMsg.confirmFail("201", "ChinaPay支付查询--返回数据验签失败！");
-                return res;
-            }
-            if ("00".equals(secssUtil.getErrCode())) {
-                String payReserved = (String) resultMap.get("PayReserved");
-                Map payReservedMap = JSON.parseObject(payReserved, Map.class);
-                codeUrl = (String) payReservedMap.get("QrCode");
-                codeUrl = URLDecoder.decode(codeUrl, "UTF-8");
-            }
-        }
+        try {
 
-        if (!StringUtils.isNotBlank(codeUrl)) {
-            System.out.println("----生成二维码失败----");
-        } else {
-            //根据链接生成二维码
-            BufferedImage bufferedImage = QrCodeUtil.generate(codeUrl, 300, 300);
-            ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-            try {
+            if ("0000".equals(respCode)) {
+                boolean verifyFlag = ChinaPayUtil.verifyNotify(resultMap, params);
+                if (!verifyFlag) {
+                    //log.error("ChinaPay支付查询--返回数据验签失败！");
+                    res.setChannelRetMsg(channelRetMsg.confirmFail("201", "ChinaPay支付查询--返回数据验签失败！"));
+                    return res;
+                }
+                if ("00".equals(secssUtil.getErrCode())) {
+                    String payReserved = (String) resultMap.get("PayReserved");
+                    Map payReservedMap = JSON.parseObject(payReserved, Map.class);
+                    codeUrl = (String) payReservedMap.get("QrCode");
+                    codeUrl = URLDecoder.decode(codeUrl, "UTF-8");
+                }
+            }
+
+            if (StringUtils.isNotBlank(codeUrl)) {
+
+                BufferedImage bufferedImage = QrCodeUtil.generate(codeUrl, 300, 300);
+                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
                 ImageIO.write(bufferedImage, "png", outStream);
                 byte[] bytes = outStream.toByteArray();
                 String imageBase64 = cn.hutool.core.codec.Base64.encode(bytes);
                 codeUrl = "data:image/png;base64," + imageBase64;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
 
-        if (CS.PAY_DATA_TYPE.CODE_IMG_URL.equals(res.getPayDataType())) {
-            res.setCodeImgUrl(sysConfigService.getDBApplicationConfig().genScanImgUrl(codeUrl));
-        } else {
-            res.setCodeUrl(codeUrl);
+                if (CS.PAY_DATA_TYPE.CODE_IMG_URL.equals(res.getPayDataType())) {
+                    res.setCodeImgUrl(sysConfigService.getDBApplicationConfig().genScanImgUrl(codeUrl));
+                } else {
+                    res.setCodeUrl(codeUrl);
+                }
+                res.setPayData(res.buildPayData());
+                channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
+
+            } else {
+                channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+                channelRetMsg.setChannelErrCode(respCode);
+                channelRetMsg.setChannelErrMsg(respMsg);
+            }
+
+        } catch (Exception e) {
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+            channelRetMsg.setChannelErrCode(respCode);
+            channelRetMsg.setChannelErrMsg(respMsg);
         }
         return res;
     }

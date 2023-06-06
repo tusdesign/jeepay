@@ -97,6 +97,8 @@ public class ChinaPc extends QidipayPaymentService {
 
         channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
         res.setFormContent(buildRequest);
+        res.setPayData(res.buildPayData());
+
         return res;
     }
 
