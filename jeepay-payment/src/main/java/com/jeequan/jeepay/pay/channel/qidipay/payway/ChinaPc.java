@@ -19,6 +19,7 @@ import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRQ;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRS;
 import com.jeequan.jeepay.pay.util.ApiResBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -34,6 +35,9 @@ public class ChinaPc extends QidipayPaymentService {
     private static final String frontPayUrl = "https://newpayment-test.chinapay.com/CTITS/service/rest/page/nref/000000000017/0/0/0/0/0";
     private static final String endPayUrl = "https://newpayment-test.chinapay.com/CTITS/service/rest/forward/syn/000000000017/0/0/0/0/0";
 
+    @Autowired
+    private ChinaPayUtil chinaPayUtil;
+
     @Override
     public String preCheck(UnifiedOrderRQ bizRQ, PayOrder payOrder) {
         return null;
@@ -42,7 +46,7 @@ public class ChinaPc extends QidipayPaymentService {
     @Override
     public AbstractRS pay(UnifiedOrderRQ rq, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-        QidipayNormalMchParams params = (QidipayNormalMchParams)configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
+        QidipayNormalMchParams params = (QidipayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
         ChinaPcOrderRQ bizRQ = (ChinaPcOrderRQ) rq;
         ChinaPcOrderRS res = ApiResBuilder.buildSuccess(ChinaPcOrderRS.class);
@@ -55,50 +59,52 @@ public class ChinaPc extends QidipayPaymentService {
 
         Map<String, Object> paramMap = new TreeMap<>();
         Date nowDate = new Date();
-        paramMap.put("Version",params.getPayVersion());
-        paramMap.put("AccessType","0"); //接入类型  0：商户身份接入（默认）1：机构身份接入
+        paramMap.put("Version", params.getPayVersion());
+        paramMap.put("AccessType", "0"); //接入类型  0：商户身份接入（默认）1：机构身份接入
         paramMap.put("MerId", params.getMchId());
-        paramMap.put("MerOrderNo",bizRQ.getMchOrderNo());
+        paramMap.put("MerOrderNo", bizRQ.getMchOrderNo());
         paramMap.put("TranDate", dateFormat.format(new Date()));
         paramMap.put("TranTime", timeFormat.format(new Date()));
         paramMap.put("OrderAmt", bizRQ.getAmount());//单位：分
         paramMap.put("BusiType", "0001");//业务类型，固定值
-        paramMap.put("CommodityMsg",bizRQ.getBody());
+        paramMap.put("CommodityMsg", bizRQ.getBody());
 
         paramMap.put("MerBgUrl", getNotifyUrl());
         paramMap.put("MerPageUrl", bizRQ.getReturnUrl());
         paramMap.put("RemoteAddr", bizRQ.getClientIp());
 
-        System.out.println("==============订单号===========:"+paramMap.get("MerOrderNo"));
+        System.out.println("==============订单号===========:" + paramMap.get("MerOrderNo"));
 
-        SecssUtil secssUtil = ChinaPayUtil.init(params);
-        secssUtil.sign(paramMap);
-        if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode()))
-        {
-            log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
+        boolean initResult = chinaPayUtil.init(params);
+        if (initResult) {
 
-            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-            channelRetMsg.setChannelErrCode("9999");
-            channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
+            SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
+            secssUtil.sign(paramMap);
+            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
+
+                channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+                channelRetMsg.setChannelErrCode("9999");
+                channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
+            }
+            String signature = secssUtil.getSign();
+            paramMap.put("Signature", signature);
+
+            System.out.println("####################请求总参数####################");
+            System.out.println(paramMap);
+            //必须构建成【自动提交form表单】html，返回商城前端自动跳转到网银支付页面
+            String buildRequest = chinaPayUtil.buildRequest(paramMap, frontPayUrl, "post", "确定");
+
+            //请求--不能直接使用http工具发起支付请求，需要构建form表单请求自动提交
+            //String result = HttpUtils.send(frontPayUrl, paramMap);
+            //System.out.println("返回结果："+result);
+            //return "toPay";
+
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
+            res.setFormContent(buildRequest);
+            res.setPayData(res.buildPayData());
+
         }
-        String signature = secssUtil.getSign();
-        paramMap.put("Signature", signature);
-
-        System.out.println("####################请求总参数####################");
-        System.out.println(paramMap);
-        //必须构建成【自动提交form表单】html，返回商城前端自动跳转到网银支付页面
-        String buildRequest = ChinaPayUtil.buildRequest(paramMap,frontPayUrl, "post", "确定");
-
-
-        //请求--不能直接使用http工具发起支付请求，需要构建form表单请求自动提交
-        //String result = HttpUtils.send(frontPayUrl, paramMap);
-        //System.out.println("返回结果："+result);
-        //return "toPay";
-
-        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
-        res.setFormContent(buildRequest);
-        res.setPayData(res.buildPayData());
-
         return res;
     }
 

@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,9 +19,21 @@ import java.net.URLDecoder;
 import java.util.*;
 
 @Slf4j
+@Component
 public class ChinaPayUtil {
 
-    public static SecssUtil init(QidipayNormalMchParams mchParams) {
+    private SecssUtil secssUtil;
+
+    public SecssUtil getSecssUtil() {
+        return secssUtil;
+    }
+
+    public void setSecssUtil(SecssUtil secssUtil) {
+        this.secssUtil = secssUtil;
+    }
+
+
+    public Boolean init(QidipayNormalMchParams mchParams) {
 
         SecssUtil secssUtil = new SecssUtil();
 
@@ -39,38 +52,12 @@ public class ChinaPayUtil {
         properties.setProperty(SecssConstants.SECSS_PUBLICKEY, mchParams.getChinaPayPublicKey());
         properties.setProperty(SecssConstants.SECSS_EXCLUDEEXPIREDCERT, "true");
 
-        boolean bool = secssUtil.init(properties);
-        if (bool) {
-            log.info("ChinaPay交易证书、验签证书初始化成功！");
-        } else {
-            log.error("ChinaPay交易证书、验签证书初始化失败：" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
-        }
-        return secssUtil;
+        this.setSecssUtil(secssUtil);
+
+        return secssUtil.init(properties);
     }
 
-    public static boolean verifyNotify(Map<String, String> notifyMap, QidipayNormalMchParams normalMchParams) {
-
-        SecssUtil secssUtil = ChinaPayUtil.init(normalMchParams);
-        try {
-            //验签
-            String sign = notifyMap.get("Signature");
-            if (StringUtils.isNotEmpty(sign)) {
-                //入参：返回商户报文中的所有参数
-                secssUtil.verify(notifyMap);
-            }
-            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                System.out.println(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
-                System.out.println("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrMsg());
-                return false;
-            }
-            return true;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public static Map<String,String> getResponseMap(String resp) {
+    public Map<String, String> getResponseMap(String resp) {
 
         String[] strs = resp.split("&", -1);
         Map<String, String> resultMap = new TreeMap<String, String>();
@@ -95,7 +82,7 @@ public class ChinaPayUtil {
         return resultMap;
     }
 
-    public static String buildRequest(Map<String, Object> sParaTemp, String action, String strMethod, String strButtonName) {
+    public String buildRequest(Map<String, Object> sParaTemp, String action, String strMethod, String strButtonName) {
 
         List<String> keys = new ArrayList<String>(sParaTemp.keySet());
         StringBuffer sbHtml = new StringBuffer();

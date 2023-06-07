@@ -6,6 +6,7 @@ import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.exception.ResponseException;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
 import com.jeequan.jeepay.core.utils.JeepayKit;
@@ -33,8 +34,10 @@ import java.util.TreeMap;
 public class QidiPayOrderQueryService implements IPayOrderQueryService {
 
     @Autowired
-    private ConfigContextQueryService configContextQueryService;
+    private ChinaPayUtil chinaPayUtil;
 
+    @Autowired
+    private ConfigContextQueryService configContextQueryService;
 
     @Override
     public String getIfCode() {
@@ -59,34 +62,41 @@ public class QidiPayOrderQueryService implements IPayOrderQueryService {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         paramMap.put("TranDate", dateFormat.format(payOrder.getCreatedAt()));
 
-        SecssUtil secssUtil = ChinaPayUtil.init(normalMchParams);
-        secssUtil.sign(paramMap);
+        if (chinaPayUtil.init(normalMchParams)) {
 
-        if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+            SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
+            secssUtil.sign(paramMap);
 
-            log.error("ChinaPay签名失败：" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
-            return ChannelRetMsg.confirmFail(secssUtil.getErrCode(), secssUtil.getErrMsg());
+            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                log.error("ChinaPay签名失败：" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
+                return ChannelRetMsg.confirmFail(secssUtil.getErrCode(), secssUtil.getErrMsg());
+            }
+
+            // TODO 同步请求
+            paramMap.put("Signature", secssUtil.getSign());
+            String resp = HttpUtil.post("payQueryUrl", paramMap);
+            log.info("################交易查询结果：{}", resp);
+
+            //解析同步应答字段
+            Map<String, String> resultMap = chinaPayUtil.getResponseMap(resp);
+
+            //返回数据验签
+            String sign = resultMap.get("Signature"); //返回数据验签
+            if (StringUtils.isEmpty(sign)) {
+                secssUtil.verify(resultMap);
+            }
+            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo"); // 渠道订单号
+                log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
+                throw ResponseException.buildText("ERROR");
+            }
+
+            ChannelRetMsg channelResult = new ChannelRetMsg();
+            channelResult.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
+            return channelResult;
         }
+        return ChannelRetMsg.confirmFail();
 
-        // TODO 同步请求
-        paramMap.put("Signature", secssUtil.getSign());
-        String resp = HttpUtil.post("payQueryUrl", paramMap);
-        log.info("################交易查询结果：{}", resp);
-
-        //解析同步应答字段
-        Map<String, String> resultMap = ChinaPayUtil.getResponseMap(resp);
-
-        //返回数据验签
-        boolean verifyFlag = ChinaPayUtil.verifyNotify(resultMap, normalMchParams);
-        if (!verifyFlag) {
-            log.error("ChinaPay支付查询--返回数据验签失败！");
-            return ChannelRetMsg.confirmFail("201", "ChinaPay支付查询--返回数据验签失败！");
-        }
-
-        ChannelRetMsg channelResult = new ChannelRetMsg();
-        channelResult.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
-        return channelResult;
     }
-
 
 }
