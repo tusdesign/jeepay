@@ -8,6 +8,7 @@ import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.model.params.qidipay.QidipayConfig;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.exception.JeepayException;
 import com.jeequan.jeepay.pay.channel.qidipay.QidipayPaymentService;
@@ -109,7 +110,8 @@ public class ChinaQr extends QidipayPaymentService {
                 String signature = secssUtil.getSign();
                 submitFromData.put("Signature", signature);
 
-                String httpRes = HttpUtil.post("chinaPayConstants.PAY_SEND_URL", submitFromData, 60000);
+                String payUrl=chinaPayUtil.getPayUrl(params.getQrPayUrl())+ QidipayConfig.QRPAYPATH;
+                String httpRes = HttpUtil.post(payUrl, submitFromData, 60000);
 
                 String codeUrl = StringUtils.EMPTY;
                 Map<String, String> resultMap = chinaPayUtil.getResponseMap(httpRes);

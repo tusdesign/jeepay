@@ -15,8 +15,14 @@ public class QidipayNormalMchParams extends NormalMchParams {
     /** 商户号 */
     private String mchId;
 
-    /** 支付网关地址 */
-    private String payUrl;
+    /** 前台支付网关 */
+    private String frontPayUrl;
+
+    /** 后台支付网关 */
+    private String bgPayUrl;
+
+    /** 二维码支付网关 */
+    private String qrPayUrl;
 
     /** 支付版本号 */
     private String payVersion;

@@ -23,6 +23,7 @@ import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.entity.RefundOrder;
 import com.jeequan.jeepay.core.exception.ResponseException;
+import com.jeequan.jeepay.core.model.params.qidipay.QidipayConfig;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
 import com.jeequan.jeepay.core.utils.JeepayKit;
@@ -75,10 +76,12 @@ public class QidipayRefundService extends AbstractRefundService {
     @Override
     public ChannelRetMsg refund(RefundOrderRQ bizRQ, RefundOrder refundOrder, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-        QidipayNormalMchParams normalMchParams = (QidipayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
+        QidipayNormalMchParams normalMchParams =
+                (QidipayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
         ChannelRetMsg channelRetMsg = new ChannelRetMsg();
-        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);// 默认退款中状态
+        // 默认退款中状态
+        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
 
         JSONObject reqParams = new JSONObject();
         reqParams.put("Version", normalMchParams.getPayVersion());
@@ -90,8 +93,10 @@ public class QidipayRefundService extends AbstractRefundService {
 
         reqParams.put("TranDate", dateFormat.format(new Date()));
         reqParams.put("TranTime", timeFormat.format(new Date()));
-        reqParams.put("OriOrderNo", payOrder.getMchOrderNo());//原始交易订单号
-        reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));//原始交易日期
+        //原始交易订单号
+        reqParams.put("OriOrderNo", payOrder.getMchOrderNo());
+        //原始交易日期
+        reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));
         reqParams.put("TranType", "0401");//退款交易
         reqParams.put("BusiType", "0001");
         reqParams.put("MerBgUrl", getNotifyUrl());
@@ -109,7 +114,8 @@ public class QidipayRefundService extends AbstractRefundService {
             String signature = secssUtil.getSign();
             reqParams.put("Signature", signature);
 
-            String resp = HttpUtil.post("payQueryUrl", reqParams, 60000);
+            String payUrl=ChinaPayUtil.getPayUrl(normalMchParams.getBgPayUrl())+ QidipayConfig.REFUNDPATH;
+            String resp = HttpUtil.post(payUrl, reqParams, 60000);
             Map<String, String> resultMap = chinaPayUtil.getResponseMap(resp);
 
             String sign = resultMap.get("Signature");

@@ -151,6 +151,7 @@ public class CS {
         String PLSPAY = "plspay";    // 计全支付plus
 
         String QIDIPAY="qidipay";    //QD支付
+        String CHINAPAY="chinapay";  //银联支付
     }
 
 

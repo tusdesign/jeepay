@@ -105,4 +105,13 @@ public class ChinaPayUtil {
         return sbHtml.toString();
     }
 
+    public static String getPayUrl(String payUrl) {
+        if(StringUtils.isEmpty(payUrl)) {
+            return payUrl;
+        }
+        if(!payUrl.endsWith("/")) {
+            payUrl += "/";
+        }
+        return payUrl;
+    }
 }

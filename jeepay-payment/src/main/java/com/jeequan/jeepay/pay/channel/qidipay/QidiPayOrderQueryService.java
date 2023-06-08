@@ -7,6 +7,7 @@ import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.exception.ResponseException;
+import com.jeequan.jeepay.core.model.params.qidipay.QidipayConfig;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
 import com.jeequan.jeepay.core.utils.JeepayKit;
@@ -74,7 +75,7 @@ public class QidiPayOrderQueryService implements IPayOrderQueryService {
 
             // TODO 同步请求
             paramMap.put("Signature", secssUtil.getSign());
-            String resp = HttpUtil.post("payQueryUrl", paramMap);
+            String resp = HttpUtil.post( chinaPayUtil.getPayUrl(normalMchParams.getBgPayUrl())+ QidipayConfig.BGPAYPATH, paramMap);
             log.info("################交易查询结果：{}", resp);
 
             //解析同步应答字段

@@ -5,6 +5,7 @@ import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 
 import com.jeequan.jeepay.core.entity.PayOrder;
+import com.jeequan.jeepay.core.model.params.qidipay.QidipayConfig;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.qidipay.QidipayPaymentService;
@@ -30,10 +31,6 @@ import java.util.TreeMap;
 @Slf4j
 @Service("chinaPaymentByChinaPcService")
 public class ChinaPc extends QidipayPaymentService {
-
-    private static final String url = "https://sfj-test.chinapay.com/dac/BatchPayTrade";
-    private static final String frontPayUrl = "https://newpayment-test.chinapay.com/CTITS/service/rest/page/nref/000000000017/0/0/0/0/0";
-    private static final String endPayUrl = "https://newpayment-test.chinapay.com/CTITS/service/rest/forward/syn/000000000017/0/0/0/0/0";
 
     @Autowired
     private ChinaPayUtil chinaPayUtil;
@@ -93,7 +90,7 @@ public class ChinaPc extends QidipayPaymentService {
             System.out.println("####################请求总参数####################");
             System.out.println(paramMap);
             //必须构建成【自动提交form表单】html，返回商城前端自动跳转到网银支付页面
-            String buildRequest = chinaPayUtil.buildRequest(paramMap, frontPayUrl, "post", "确定");
+            String buildRequest = chinaPayUtil.buildRequest(paramMap, chinaPayUtil.getPayUrl(params.getFrontPayUrl()+ QidipayConfig.FRONTPAYPATH), "post", "确定");
 
             //请求--不能直接使用http工具发起支付请求，需要构建form表单请求自动提交
             //String result = HttpUtils.send(frontPayUrl, paramMap);

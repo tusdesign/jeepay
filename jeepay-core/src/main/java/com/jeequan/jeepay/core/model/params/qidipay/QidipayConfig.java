@@ -21,4 +21,28 @@ public class QidipayConfig {
      * 默认编码.
      */
     public static final String ENCODING = "UTF-8";
+
+
+
+    /**
+     * 前台支付路径
+     */
+    public static final String FRONTPAYPATH="page/nref/000000000017/0/0/0/0/0";
+
+    /**
+     * 支付订单查询路径
+     */
+    public static final String BGPAYPATH="forward/syn/000000000060/0/0/0/0/0";
+
+    /**
+     * 退款接口
+     */
+    public static final String REFUNDPATH="forward/syn/000000000065/0/0/0/0/0";
+
+    /**
+     * 二维码支付
+     */
+    public static final String QRPAYPATH="momsMgr/bgTransGet";
+
+
 }
