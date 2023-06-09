@@ -15,45 +15,17 @@ public class QidipayNormalMchParams extends NormalMchParams {
     /** 商户号 */
     private String mchId;
 
-    /** 前台支付网关 */
-    private String frontPayUrl;
+    /** 私钥 */
+    private String key;
 
-    /** 后台支付网关 */
-    private String bgPayUrl;
-
-    /** 二维码支付网关 */
-    private String qrPayUrl;
-
-    /** 支付版本号 */
-    private String payVersion;
-
-    /** privateKey */
-    private String privateKey;
-
-    /** 私钥密码 */
-    private String privatePwd;
-
-    /** alipayPublicKey */
-    private String chinaPayPublicKey;
-
-    /** 算法 **/
-    private String secret;
-
-    /** 私钥证书 (.sm2格式）**/
-    private String chinaPayPrivateCert;
-
-    /** 银联公钥证书（.cer格式） **/
-    private String chinaPayPublicCert;
-
+    /** 支付网关地址 */
+    private String payUrl;
 
     @Override
     public String deSenData() {
         QidipayNormalMchParams mchParams = this;
-        if (StringUtils.isNotBlank(this.privateKey)) {
-            mchParams.setPrivateKey(StringKit.str2Star(this.privateKey, 4, 4, 6));
-        }
-        if (StringUtils.isNotBlank(this.chinaPayPublicKey)) {
-            mchParams.setChinaPayPublicKey(StringKit.str2Star(this.chinaPayPublicKey, 4, 4, 6));
+        if (StringUtils.isNotBlank(this.key)) {
+            mchParams.setKey(StringKit.str2Star(this.key, 4, 4, 6));
         }
         return ((JSONObject) JSON.toJSON(mchParams)).toJSONString();
     }

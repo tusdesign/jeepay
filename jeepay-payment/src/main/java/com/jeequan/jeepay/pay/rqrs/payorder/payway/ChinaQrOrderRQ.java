@@ -9,7 +9,7 @@ public class ChinaQrOrderRQ extends CommonPayDataRQ {
 
     /** 构造函数 **/
     public ChinaQrOrderRQ(){
-        this.setWayCode(CS.PAY_WAY_CODE.CHINA_QR);
+        this.setWayCode(CS.PAY_WAY_CODE.UNION_QR);
     }
 
 }

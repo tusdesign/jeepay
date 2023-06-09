@@ -1,24 +1,20 @@
-package com.jeequan.jeepay.pay.channel.qidipay.payway;
+package com.jeequan.jeepay.pay.channel.unionpay.payway;
 
 import cn.hutool.extra.qrcode.QrCodeUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
-import com.jeequan.jeepay.core.model.params.qidipay.QidipayConfig;
-import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
-import com.jeequan.jeepay.exception.JeepayException;
-import com.jeequan.jeepay.pay.channel.qidipay.QidipayPaymentService;
-import com.jeequan.jeepay.pay.channel.qidipay.utils.ChinaPayUtil;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
+import com.jeequan.jeepay.pay.channel.unionpay.UnionpayPaymentService;
+import com.jeequan.jeepay.pay.channel.unionpay.utils.UnionPayUtil;
 import com.jeequan.jeepay.pay.model.MchAppConfigContext;
 import com.jeequan.jeepay.pay.rqrs.AbstractRS;
 import com.jeequan.jeepay.pay.rqrs.msg.ChannelRetMsg;
 import com.jeequan.jeepay.pay.rqrs.payorder.UnifiedOrderRQ;
-import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRQ;
-import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRS;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaQrOrderRQ;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaQrOrderRS;
 import com.jeequan.jeepay.pay.util.ApiResBuilder;
@@ -30,20 +26,18 @@ import org.springframework.stereotype.Service;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.net.URLDecoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Slf4j
-@Service("chinaPaymentByChinaQrService")
-public class ChinaQr extends QidipayPaymentService {
+@Service("unionpayPaymentByUnionQrService")
+public class UnionQr extends UnionpayPaymentService {
 
     @Autowired
-    private ChinaPayUtil chinaPayUtil;
+    private UnionPayUtil chinaPayUtil;
 
     @Override
     public String preCheck(UnifiedOrderRQ bizRQ, PayOrder payOrder) {
@@ -53,7 +47,7 @@ public class ChinaQr extends QidipayPaymentService {
     @Override
     public AbstractRS pay(UnifiedOrderRQ rq, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-        QidipayNormalMchParams params = (QidipayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
+        UnionPayNormalMchParams params = (UnionPayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
         ChinaQrOrderRQ bizRQ = (ChinaQrOrderRQ) rq;
         ChinaQrOrderRS res = ApiResBuilder.buildSuccess(ChinaQrOrderRS.class);
@@ -110,7 +104,7 @@ public class ChinaQr extends QidipayPaymentService {
                 String signature = secssUtil.getSign();
                 submitFromData.put("Signature", signature);
 
-                String payUrl=chinaPayUtil.getPayUrl(params.getQrPayUrl())+ QidipayConfig.QRPAYPATH;
+                String payUrl=chinaPayUtil.getPayUrl(params.getQrPayUrl())+ UnionPayConfig.QRPAYPATH;
                 String httpRes = HttpUtil.post(payUrl, submitFromData, 60000);
 
                 String codeUrl = StringUtils.EMPTY;

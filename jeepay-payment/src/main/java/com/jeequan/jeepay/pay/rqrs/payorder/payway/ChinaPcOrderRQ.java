@@ -16,7 +16,7 @@ public class ChinaPcOrderRQ extends CommonPayDataRQ {
 
     /** 构造函数 **/
     public ChinaPcOrderRQ(){
-        this.setWayCode(CS.PAY_WAY_CODE.CHINA_PC);
+        this.setWayCode(CS.PAY_WAY_CODE.UNION_PC);
     }
 
 }

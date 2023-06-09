@@ -1,26 +1,23 @@
-package com.jeequan.jeepay.pay.channel.qidipay.utils;
+package com.jeequan.jeepay.pay.channel.unionpay.utils;
 
 
 import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.core.utils.SpringBeansUtil;
 import com.jeequan.jeepay.pay.util.ChannelCertConfigKitBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.*;
 
 @Slf4j
 @Component
-public class ChinaPayUtil {
+public class UnionPayUtil {
 
     private SecssUtil secssUtil;
 
@@ -33,7 +30,7 @@ public class ChinaPayUtil {
     }
 
 
-    public Boolean init(QidipayNormalMchParams mchParams) {
+    public Boolean init(UnionPayNormalMchParams mchParams) {
 
         SecssUtil secssUtil = new SecssUtil();
 
@@ -43,18 +40,36 @@ public class ChinaPayUtil {
 
         properties.setProperty(SecssConstants.SIGN_INVALID_FIELDS, "signature,CertId");
         properties.setProperty(SecssConstants.SIGNATURE_FIELD, "signature");
-        properties.setProperty(SecssConstants.SECSS_PRIVATEALG, mchParams.getSecret());
-        properties.setProperty(SecssConstants.SECSS_PRIVATEPATH, channelCertConfigKitBean.getCertFilePath(mchParams.getChinaPayPrivateCert()));
-        properties.setProperty(SecssConstants.SECSS_PRIVATEPWD, mchParams.getPrivatePwd());
-        properties.setProperty(SecssConstants.SECSS_PRIVATEKEY, mchParams.getPrivateKey());
-        properties.setProperty(SecssConstants.SECSS_PUBLICALG, mchParams.getSecret());
-        properties.setProperty(SecssConstants.SECSS_PUBLICPATH, channelCertConfigKitBean.getCertFilePath(mchParams.getChinaPayPublicCert()));
-        properties.setProperty(SecssConstants.SECSS_PUBLICKEY, mchParams.getChinaPayPublicKey());
+        if(StringUtils.isNotEmpty(mchParams.getSecret())) {
+            properties.setProperty(SecssConstants.SECSS_PRIVATEALG, mchParams.getSecret());
+        }
+        if(StringUtils.isNotEmpty(mchParams.getChinaPayPrivateCert())) {
+            properties.setProperty(SecssConstants.SECSS_PRIVATEPATH, channelCertConfigKitBean.getCertFilePath(mchParams.getChinaPayPrivateCert()));
+        }
+        if(StringUtils.isNotEmpty(mchParams.getPrivatePwd())){
+            properties.setProperty(SecssConstants.SECSS_PRIVATEPWD, mchParams.getPrivatePwd());
+        }
+        if(StringUtils.isNotEmpty(mchParams.getPrivateKey())){
+            properties.setProperty(SecssConstants.SECSS_PRIVATEKEY, mchParams.getPrivateKey());
+        }else{
+            properties.setProperty(SecssConstants.SECSS_PRIVATEKEY, "");
+        }
+        if(StringUtils.isNotEmpty(mchParams.getSecret())){
+            properties.setProperty(SecssConstants.SECSS_PUBLICALG, mchParams.getSecret());
+        }
+        if(StringUtils.isNotEmpty(mchParams.getChinaPayPublicCert())){
+            properties.setProperty(SecssConstants.SECSS_PUBLICPATH, channelCertConfigKitBean.getCertFilePath(mchParams.getChinaPayPublicCert()));
+        }
+        if(StringUtils.isNotEmpty(mchParams.getChinaPayPublicKey())){
+            properties.setProperty(SecssConstants.SECSS_PUBLICKEY, mchParams.getChinaPayPublicKey());
+        }else{
+            properties.setProperty(SecssConstants.SECSS_PUBLICKEY, "");
+        }
         properties.setProperty(SecssConstants.SECSS_EXCLUDEEXPIREDCERT, "true");
 
+        secssUtil.init(properties);
         this.setSecssUtil(secssUtil);
-
-        return secssUtil.init(properties);
+        return true;
     }
 
     public Map<String, String> getResponseMap(String resp) {

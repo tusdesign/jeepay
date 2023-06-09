@@ -1,21 +1,17 @@
-package com.jeequan.jeepay.pay.channel.qidipay.payway;
+package com.jeequan.jeepay.pay.channel.unionpay.payway;
 
-import ch.qos.logback.core.util.TimeUtil;
 import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 
 import com.jeequan.jeepay.core.entity.PayOrder;
-import com.jeequan.jeepay.core.model.params.qidipay.QidipayConfig;
-import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
-import com.jeequan.jeepay.core.model.params.xxpay.XxpayNormalMchParams;
-import com.jeequan.jeepay.pay.channel.qidipay.QidipayPaymentService;
-import com.jeequan.jeepay.pay.channel.qidipay.utils.ChinaPayUtil;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
+import com.jeequan.jeepay.pay.channel.unionpay.UnionpayPaymentService;
+import com.jeequan.jeepay.pay.channel.unionpay.utils.UnionPayUtil;
 import com.jeequan.jeepay.pay.model.MchAppConfigContext;
 import com.jeequan.jeepay.pay.rqrs.AbstractRS;
 import com.jeequan.jeepay.pay.rqrs.msg.ChannelRetMsg;
 import com.jeequan.jeepay.pay.rqrs.payorder.UnifiedOrderRQ;
-import com.jeequan.jeepay.pay.rqrs.payorder.payway.AliBarOrderRQ;
-import com.jeequan.jeepay.pay.rqrs.payorder.payway.AliBarOrderRS;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRQ;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRS;
 import com.jeequan.jeepay.pay.util.ApiResBuilder;
@@ -29,11 +25,11 @@ import java.util.Map;
 import java.util.TreeMap;
 
 @Slf4j
-@Service("chinaPaymentByChinaPcService")
-public class ChinaPc extends QidipayPaymentService {
+@Service("unionpayPaymentByUnionPcService")
+public class UnionPc extends UnionpayPaymentService {
 
     @Autowired
-    private ChinaPayUtil chinaPayUtil;
+    private UnionPayUtil unionPayUtil;
 
     @Override
     public String preCheck(UnifiedOrderRQ bizRQ, PayOrder payOrder) {
@@ -43,7 +39,7 @@ public class ChinaPc extends QidipayPaymentService {
     @Override
     public AbstractRS pay(UnifiedOrderRQ rq, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-        QidipayNormalMchParams params = (QidipayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
+        UnionPayNormalMchParams params = (UnionPayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
         ChinaPcOrderRQ bizRQ = (ChinaPcOrderRQ) rq;
         ChinaPcOrderRS res = ApiResBuilder.buildSuccess(ChinaPcOrderRS.class);
@@ -62,7 +58,7 @@ public class ChinaPc extends QidipayPaymentService {
         paramMap.put("MerOrderNo", bizRQ.getMchOrderNo());
         paramMap.put("TranDate", dateFormat.format(new Date()));
         paramMap.put("TranTime", timeFormat.format(new Date()));
-        paramMap.put("OrderAmt", bizRQ.getAmount());//单位：分
+        paramMap.put("OrderAmt", String.valueOf(bizRQ.getAmount()));//单位：分
         paramMap.put("BusiType", "0001");//业务类型，固定值
         paramMap.put("CommodityMsg", bizRQ.getBody());
 
@@ -72,10 +68,10 @@ public class ChinaPc extends QidipayPaymentService {
 
         System.out.println("==============订单号===========:" + paramMap.get("MerOrderNo"));
 
-        boolean initResult = chinaPayUtil.init(params);
+        boolean initResult = unionPayUtil.init(params);
         if (initResult) {
 
-            SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
+            SecssUtil secssUtil = unionPayUtil.getSecssUtil();
             secssUtil.sign(paramMap);
             if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
                 log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
@@ -90,7 +86,7 @@ public class ChinaPc extends QidipayPaymentService {
             System.out.println("####################请求总参数####################");
             System.out.println(paramMap);
             //必须构建成【自动提交form表单】html，返回商城前端自动跳转到网银支付页面
-            String buildRequest = chinaPayUtil.buildRequest(paramMap, chinaPayUtil.getPayUrl(params.getFrontPayUrl()+ QidipayConfig.FRONTPAYPATH), "post", "确定");
+            String buildRequest = unionPayUtil.buildRequest(paramMap, unionPayUtil.getPayUrl(params.getFrontPayUrl()+ UnionPayConfig.FRONTPAYPATH), "post", "确定");
 
             //请求--不能直接使用http工具发起支付请求，需要构建form表单请求自动提交
             //String result = HttpUtils.send(frontPayUrl, paramMap);

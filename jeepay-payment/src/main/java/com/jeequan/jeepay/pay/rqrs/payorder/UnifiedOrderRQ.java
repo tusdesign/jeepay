@@ -162,11 +162,11 @@ public class UnifiedOrderRQ extends AbstractMchAppRQ {
             QiDiAppOrderRQ bizRQ = JSONObject.parseObject(StringUtils.defaultIfEmpty(this.channelExtra, "{}"), QiDiAppOrderRQ.class);
             BeanUtils.copyProperties(this, bizRQ);
             return bizRQ;
-        }else if (CS.PAY_WAY_CODE.CHINA_PC.equals(wayCode)){
+        }else if (CS.PAY_WAY_CODE.UNION_PC.equals(wayCode)){
             ChinaPcOrderRQ bizRQ = JSONObject.parseObject(StringUtils.defaultIfEmpty(this.channelExtra, "{}"), ChinaPcOrderRQ.class);
             BeanUtils.copyProperties(this, bizRQ);
             return bizRQ;
-        }else if (CS.PAY_WAY_CODE.CHINA_QR.equals(wayCode)){
+        }else if (CS.PAY_WAY_CODE.UNION_QR.equals(wayCode)){
             ChinaQrOrderRQ bizRQ = JSONObject.parseObject(StringUtils.defaultIfEmpty(this.channelExtra, "{}"), ChinaQrOrderRQ.class);
             BeanUtils.copyProperties(this, bizRQ);
             return bizRQ;

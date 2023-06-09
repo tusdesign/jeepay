@@ -1,4 +1,4 @@
-package com.jeequan.jeepay.pay.channel.qidipay;
+package com.jeequan.jeepay.pay.channel.unionpay;
 
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
@@ -10,11 +10,11 @@ import com.jeequan.jeepay.pay.util.PaywayUtil;
 import org.springframework.stereotype.Service;
 
 @Service
-public class QidipayPaymentService extends AbstractPaymentService {
+public class UnionpayPaymentService extends AbstractPaymentService {
 
     @Override
     public String getIfCode() {
-        return CS.IF_CODE.QIDIPAY;
+        return CS.IF_CODE.UNIONPAY;
     }
 
     @Override
@@ -31,4 +31,5 @@ public class QidipayPaymentService extends AbstractPaymentService {
     public AbstractRS pay(UnifiedOrderRQ bizRQ, PayOrder payOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
         return PaywayUtil.getRealPaywayService(this, payOrder.getWayCode()).pay(bizRQ, payOrder, mchAppConfigContext);
     }
+
 }

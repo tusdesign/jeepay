@@ -1,4 +1,4 @@
-package com.jeequan.jeepay.pay.channel.qidipay;
+package com.jeequan.jeepay.pay.channel.unionpay;
 
 import com.alibaba.fastjson.JSONObject;
 import com.chinapay.secss.SecssConstants;
@@ -6,14 +6,11 @@ import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.RefundOrder;
 import com.jeequan.jeepay.core.exception.ResponseException;
-import com.jeequan.jeepay.core.model.params.plspay.PlspayConfig;
-import com.jeequan.jeepay.core.model.params.plspay.PlspayNormalMchParams;
-import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.AbstractChannelRefundNoticeService;
-import com.jeequan.jeepay.pay.channel.qidipay.utils.ChinaPayUtil;
+import com.jeequan.jeepay.pay.channel.unionpay.utils.UnionPayUtil;
 import com.jeequan.jeepay.pay.model.MchAppConfigContext;
 import com.jeequan.jeepay.pay.rqrs.msg.ChannelRetMsg;
-import com.jeequan.jeepay.util.JeepayKit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -27,14 +24,14 @@ import java.util.Date;
 
 @Service
 @Slf4j
-public class QidipayChannelRefundNoticeService extends AbstractChannelRefundNoticeService {
+public class UnionpayChannelRefundNoticeService extends AbstractChannelRefundNoticeService {
 
     @Autowired
-    private ChinaPayUtil chinaPayUtil;
+    private UnionPayUtil chinaPayUtil;
 
     @Override
     public String getIfCode() {
-        return CS.IF_CODE.QIDIPAY;
+        return CS.IF_CODE.UNIONPAY;
     }
 
     @Override
@@ -55,14 +52,14 @@ public class QidipayChannelRefundNoticeService extends AbstractChannelRefundNoti
 
         try {
 
-            QidipayNormalMchParams qidipayNormalMchParams = (QidipayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
+            UnionPayNormalMchParams unionPayNormalMchParams = (UnionPayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
             //获取请求头参数到paramsMap
             JSONObject jsonParam = (JSONObject) params;
             //返回数据验签
             String sign = jsonParam.getString("Signature");
             // 验证参数失败
-            boolean verifyResult = verifyParams(jsonParam, sign, qidipayNormalMchParams);
+            boolean verifyResult = verifyParams(jsonParam, sign, unionPayNormalMchParams);
             if (!verifyResult) {
                 throw ResponseException.buildText("ERROR");
             }
@@ -80,13 +77,13 @@ public class QidipayChannelRefundNoticeService extends AbstractChannelRefundNoti
     }
 
 
-    public boolean verifyParams(JSONObject jsonParam, String sign, QidipayNormalMchParams qidipayNormalMchParams) {
+    public boolean verifyParams(JSONObject jsonParam, String sign, UnionPayNormalMchParams unionPayNormalMchParams) {
         try {
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             log.info("当前时间：" + sdf.format(new Date()) + "银联支付回调原始参数：" + jsonParam.toString());
 
-            boolean initResult = chinaPayUtil.init(qidipayNormalMchParams);
+            boolean initResult = chinaPayUtil.init(unionPayNormalMchParams);
             if (initResult) {
                 SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
 

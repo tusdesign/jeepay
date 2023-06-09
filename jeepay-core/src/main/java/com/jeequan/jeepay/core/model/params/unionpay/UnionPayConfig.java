@@ -1,10 +1,10 @@
-package com.jeequan.jeepay.core.model.params.qidipay;
+package com.jeequan.jeepay.core.model.params.unionpay;
 
-public class QidipayConfig {
+public class UnionPayConfig {
 
     /**
-    * 请求参数-通知类型 0前台 1后台 默认是后台
-    * */
+     * 请求参数-通知类型 0前台 1后台 默认是后台
+     * */
     public static final String SPEC_NOTIFY_TYPE = "__notifyType";
 
     /**
@@ -43,6 +43,5 @@ public class QidipayConfig {
      * 二维码支付
      */
     public static final String QRPAYPATH="momsMgr/bgTransGet";
-
 
 }
