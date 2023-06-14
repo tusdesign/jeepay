@@ -69,6 +69,7 @@ public class UnionpayChannelNoticeService extends AbstractChannelNoticeService {
 
             boolean initResult = chinaPayUtil.init(unionPayNormalMchParams);
             if (initResult) {
+
                 SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
                 String sign = jsonParam.getString("Signature"); //返回数据验签
                 if (StringUtils.isEmpty(sign)) {
@@ -86,12 +87,16 @@ public class UnionpayChannelNoticeService extends AbstractChannelNoticeService {
                         result.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
                     } else {
                         result.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+                        result.setChannelErrCode(secssUtil.getErrCode());
+                        result.setChannelErrMsg(secssUtil.getErrMsg());
                     }
                 }
             }
             return result;
 
         } catch (Exception e) {
+
+            log.error("ChinaPay返回的应答数据【验签】失败:" + "=" + e.getMessage() + "支付明细编号为：" + payOrder.getMchOrderNo());
             throw ResponseException.buildText("ERROR" + e.getMessage());
         }
     }

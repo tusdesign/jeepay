@@ -46,50 +46,51 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
 
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.put("Version", normalMchParams.getPayVersion());
-        paramMap.put("TranType", "0502");//交易类型，固定值：0502
-        paramMap.put("BusiType", "0001");//业务类型，固定值
+        paramMap.put("TranType", "0502");//交易类型，固定值：0502表示订单查询
+        paramMap.put("BusiType", "0001");//业务类型，固定值表示在线订单
         paramMap.put("MerOrderNo", payOrder.getMchOrderNo());
         paramMap.put("MerId", payOrder.getMchNo());
 
-        // 原交易日期，格式: yyyyMMdd TODO 替换
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd"); //原交易日期，格式: yyyyMMdd
         paramMap.put("TranDate", dateFormat.format(payOrder.getCreatedAt()));
 
-        if (chinaPayUtil.init(normalMchParams)) {
+        try {
+            if (chinaPayUtil.init(normalMchParams)) {
+                SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
+                secssUtil.sign(paramMap);
 
-            SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
-            secssUtil.sign(paramMap);
+                if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                    log.error("ChinaPay签名失败：" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
+                    return ChannelRetMsg.confirmFail(secssUtil.getErrCode(), secssUtil.getErrMsg());
+                }
 
-            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                log.error("ChinaPay签名失败：" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
-                return ChannelRetMsg.confirmFail(secssUtil.getErrCode(), secssUtil.getErrMsg());
+                paramMap.put("Signature", secssUtil.getSign());
+                String resJSON = HttpUtil.post(chinaPayUtil.getPayUrl(normalMchParams.getBgPayUrl()) + UnionPayConfig.BGPAYPATH, paramMap);
+
+                log.info("查询订单 payorderId:{}, 返回结果:{}", payOrder.getPayOrderId(), resJSON);
+                if (StringUtils.isEmpty(resJSON)) {
+                    return ChannelRetMsg.waiting(); //查询处理中
+                }
+
+                Map<String, Object> resultMap = chinaPayUtil.strToMap(resJSON); //解析同步应答字段
+                String sign = resultMap.get("Signature").toString(); //返回数据验签
+                if (StringUtils.isEmpty(sign)) {
+                    secssUtil.verify(resultMap);
+                }
+                if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                    String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo").toString(); // 渠道订单号
+                    log.error("UnionPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
+
+                    return ChannelRetMsg.confirmFail(resultMap.get("MerOrderNo").toString(), secssUtil.getErrCode(), secssUtil.getErrMsg());
+                }
+                return ChannelRetMsg.confirmSuccess(resultMap.get("MerOrderNo").toString());  //支付成功
             }
+            return ChannelRetMsg.sysError("UnionPay配置参数初始化错误");
 
-            // TODO 同步请求
-            paramMap.put("Signature", secssUtil.getSign());
-            String resp = HttpUtil.post( chinaPayUtil.getPayUrl(normalMchParams.getBgPayUrl())+ UnionPayConfig.BGPAYPATH, paramMap);
-            log.info("################交易查询结果：{}", resp);
-
-            //解析同步应答字段
-            Map<String, String> resultMap = chinaPayUtil.getResponseMap(resp);
-
-            //返回数据验签
-            String sign = resultMap.get("Signature"); //返回数据验签
-            if (StringUtils.isEmpty(sign)) {
-                secssUtil.verify(resultMap);
-            }
-            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo"); // 渠道订单号
-                log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
-                throw ResponseException.buildText("ERROR");
-            }
-
-            ChannelRetMsg channelResult = new ChannelRetMsg();
-            channelResult.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
-            return channelResult;
+        } catch (Exception ex) {
+            log.error("UnionPay查询失败:" + ex.getMessage() + "支付明细编号为：" + payOrder.getMchOrderNo());
+            return ChannelRetMsg.waiting();
         }
-        return ChannelRetMsg.confirmFail();
-
     }
 
 }

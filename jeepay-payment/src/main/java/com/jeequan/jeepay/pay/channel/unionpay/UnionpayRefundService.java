@@ -114,14 +114,14 @@ public class UnionpayRefundService extends AbstractRefundService {
 
             String payUrl= UnionPayUtil.getPayUrl(normalMchParams.getBgPayUrl())+ UnionPayConfig.REFUNDPATH;
             String resp = HttpUtil.post(payUrl, reqParams, 60000);
-            Map<String, String> resultMap = chinaPayUtil.getResponseMap(resp);
+            Map<String, Object> resultMap = chinaPayUtil.strToMap(resp);
 
-            String sign = resultMap.get("Signature");
+            String sign = resultMap.get("Signature").toString();
             if (StringUtils.isEmpty(sign)) {
                 secssUtil.verify(resultMap);
             }
             if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo"); //渠道订单号
+                String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo").toString(); //渠道订单号
                 log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
                 throw ResponseException.buildText("ERROR");
             }

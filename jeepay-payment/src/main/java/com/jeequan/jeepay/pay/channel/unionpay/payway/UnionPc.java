@@ -16,6 +16,7 @@ import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRQ;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.ChinaPcOrderRS;
 import com.jeequan.jeepay.pay.util.ApiResBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -48,7 +49,6 @@ public class UnionPc extends UnionpayPaymentService {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
         Map<String, Object> paramMap = new TreeMap<>();
         Date nowDate = new Date();
@@ -59,14 +59,20 @@ public class UnionPc extends UnionpayPaymentService {
         paramMap.put("TranDate", dateFormat.format(new Date()));
         paramMap.put("TranTime", timeFormat.format(new Date()));
         paramMap.put("OrderAmt", String.valueOf(bizRQ.getAmount()));//单位：分
-        paramMap.put("BusiType", "0001");//业务类型，固定值
-        paramMap.put("CommodityMsg", bizRQ.getBody());
+        paramMap.put("BusiType", "0001");//固定值:表示银行卡的快捷支付
 
-        paramMap.put("MerBgUrl", getNotifyUrl());
-        paramMap.put("MerPageUrl", bizRQ.getReturnUrl());
-        paramMap.put("RemoteAddr", bizRQ.getClientIp());
-
-        System.out.println("==============订单号===========:" + paramMap.get("MerOrderNo"));
+        if (StringUtils.isNotEmpty(bizRQ.getBody())) {
+            paramMap.put("CommodityMsg", bizRQ.getBody());
+        }
+        if (StringUtils.isNotEmpty(getNotifyUrl())) {
+            paramMap.put("MerBgUrl", getNotifyUrl());
+        }
+        if (StringUtils.isNotEmpty(getNotifyUrl())) {
+            paramMap.put("MerPageUrl", bizRQ.getReturnUrl());
+        }
+        if (StringUtils.isNotEmpty(bizRQ.getClientIp())) {
+            paramMap.put("RemoteAddr", bizRQ.getClientIp());
+        }
 
         boolean initResult = unionPayUtil.init(params);
         if (initResult) {
@@ -74,30 +80,31 @@ public class UnionPc extends UnionpayPaymentService {
             SecssUtil secssUtil = unionPayUtil.getSecssUtil();
             secssUtil.sign(paramMap);
             if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
 
+                log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
                 channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
                 channelRetMsg.setChannelErrCode("9999");
                 channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
             }
+
             String signature = secssUtil.getSign();
             paramMap.put("Signature", signature);
 
-            System.out.println("####################请求总参数####################");
-            System.out.println(paramMap);
-            //必须构建成【自动提交form表单】html，返回商城前端自动跳转到网银支付页面
-            String buildRequest = unionPayUtil.buildRequest(paramMap, unionPayUtil.getPayUrl(params.getFrontPayUrl()+ UnionPayConfig.FRONTPAYPATH), "post", "确定");
+            //System.out.println("####################请求总参数####################");
 
-            //请求--不能直接使用http工具发起支付请求，需要构建form表单请求自动提交
-            //String result = HttpUtils.send(frontPayUrl, paramMap);
-            //System.out.println("返回结果："+result);
-            //return "toPay";
+            String buildRequest = unionPayUtil.buildRequest(paramMap, unionPayUtil.getPayUrl(params.getFrontPayUrl() + UnionPayConfig.FRONTPAYPATH), "post", "确定");
 
-            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
             res.setFormContent(buildRequest);
-            res.setPayData(res.buildPayData());
 
+        } else {
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+            channelRetMsg.setChannelErrCode("9999");
+            channelRetMsg.setChannelErrMsg("UnionPay初始化错误");
         }
+
+        res.setPayData(res.buildPayData());
+        res.setPayDataType(res.buildPayDataType());
         return res;
     }
 

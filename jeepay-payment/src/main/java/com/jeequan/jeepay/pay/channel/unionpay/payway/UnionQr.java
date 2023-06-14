@@ -10,7 +10,7 @@ import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.unionpay.UnionpayPaymentService;
-import com.jeequan.jeepay.pay.channel.unionpay.utils.UnionPayUtil;
+import com.jeequan.jeepay.pay.channel.unionpay.utils.*;
 import com.jeequan.jeepay.pay.model.MchAppConfigContext;
 import com.jeequan.jeepay.pay.rqrs.AbstractRS;
 import com.jeequan.jeepay.pay.rqrs.msg.ChannelRetMsg;
@@ -49,48 +49,68 @@ public class UnionQr extends UnionpayPaymentService {
 
         UnionPayNormalMchParams params = (UnionPayNormalMchParams) configContextQueryService.queryNormalMchParams(mchAppConfigContext.getMchNo(), mchAppConfigContext.getAppId(), getIfCode());
 
-        ChinaQrOrderRQ bizRQ = (ChinaQrOrderRQ) rq;
+        ChinaQrOrderRQ bizRQ = (ChinaQrOrderRQ) rq.buildBizRQ();
         ChinaQrOrderRS res = ApiResBuilder.buildSuccess(ChinaQrOrderRS.class);
         ChannelRetMsg channelRetMsg = new ChannelRetMsg();
         res.setChannelRetMsg(channelRetMsg);
 
-        //模拟测试订单信息
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
-        Date current = new Date();
         Map<String, String> orderReserveMap = new HashMap<>();
-        orderReserveMap.put("OrderType", "0001");
-        orderReserveMap.put("OrderValidTime", format.format(current));
-        orderReserveMap.put("qrPattern", "link");
+        orderReserveMap.put("OrderType", "0001");//0001表示在线订单
+        orderReserveMap.put("OrderValidTime", DateUtil.getNextDate(DateUtil.getToday("yyyyMMdd"), 1) + "235959");
+
+        if (StringUtils.isNotEmpty(bizRQ.getPayDataType())) {
+            if (bizRQ.getPayDataType().equals(CS.PAY_DATA_TYPE.PAY_URL)) {
+                orderReserveMap.put("qrPattern", "link");
+            } else if (bizRQ.getPayDataType().equals(CS.PAY_DATA_TYPE.CODE_URL)) {
+                orderReserveMap.put("qrPattern", "image");
+            } else if (bizRQ.getPayDataType().equals(CS.PAY_DATA_TYPE.CODE_IMG_URL)) {
+                orderReserveMap.put("qrPattern", "image");
+            }
+        } else {
+            bizRQ.setPayDataType(CS.PAY_DATA_TYPE.CODE_IMG_URL);
+            orderReserveMap.put("qrPattern", "image");
+        }
+        orderReserveMap.put("QrCodeProvider", "0002");
+
         String orderReserve = JSON.toJSONString(orderReserveMap);
 
         Map<String, Object> submitFromData = new HashMap();
         submitFromData.put("Version", params.getPayVersion());
-        submitFromData.put("AccessType", "0");
+        submitFromData.put("AccessType", "0");//接入类型 0:商户身份接入 1:机构身份接入
         submitFromData.put("MerId", params.getMchId());
         submitFromData.put("MerOrderNo", bizRQ.getMchOrderNo());
         submitFromData.put("TranDate", dateFormat.format(new Date()));
         submitFromData.put("TranTime", timeFormat.format(new Date()));
         submitFromData.put("OrderAmt", String.valueOf(bizRQ.getAmount()));
-        submitFromData.put("TranType", "0009");
-        submitFromData.put("BusiType", "0001");
+        submitFromData.put("TranType", "0009");//0009表示银联二维码支付方式
+        submitFromData.put("BusiType", "0001");//固定值
         submitFromData.put("CurryNo", "CNY");
 
-        submitFromData.put("MerPageUrl", bizRQ.getReturnUrl());
-        submitFromData.put("MerBgUrl", getNotifyUrl());
-        submitFromData.put("MerResv", "productId");
-        submitFromData.put("PayTimeOut", "30");
-        submitFromData.put("OrderReserved", orderReserve);
-        submitFromData.put("CommodityMsg", bizRQ.getBody());
+        if (StringUtils.isNotEmpty(bizRQ.getReturnUrl())) {
+            submitFromData.put("MerPageUrl", bizRQ.getReturnUrl()); //前台页面通知地址
+        }
+
+        if (StringUtils.isNotEmpty(getNotifyUrl())) {
+            submitFromData.put("MerBgUrl", getNotifyUrl()); //异步信息回调地址
+        }
+
+        if (StringUtils.isNotEmpty(bizRQ.getBody())) {
+            submitFromData.put("CommodityMsg", bizRQ.getBody()); //订单描述信息
+        }
+        submitFromData.put("MerResv", payOrder.getPayOrderId());
+        submitFromData.put("PayTimeOut", "30");//订单支付有效时间:30分钟
+        submitFromData.put("OrderReserved", orderReserve);//支付拓展信息
 
         try {
 
-            Boolean initResult= chinaPayUtil.init(params);
-            if(initResult){
+            Boolean initResult = chinaPayUtil.init(params);
+            if (initResult) {
 
-                SecssUtil secssUtil=chinaPayUtil.getSecssUtil();
+                SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
                 secssUtil.sign(submitFromData);
                 if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
 
@@ -100,29 +120,29 @@ public class UnionQr extends UnionpayPaymentService {
                     channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
                 }
 
-                secssUtil.sign(submitFromData);
                 String signature = secssUtil.getSign();
                 submitFromData.put("Signature", signature);
 
-                String payUrl=chinaPayUtil.getPayUrl(params.getQrPayUrl())+ UnionPayConfig.QRPAYPATH;
-                String httpRes = HttpUtil.post(payUrl, submitFromData, 60000);
-
                 String codeUrl = StringUtils.EMPTY;
-                Map<String, String> resultMap = chinaPayUtil.getResponseMap(httpRes);
+                String payUrl = chinaPayUtil.getPayUrl(params.getQrPayUrl()) + UnionPayConfig.QRPAYPATH;
 
-                String respCode = resultMap.get("respCode");//应答码
-                String respMsg = resultMap.get("respMsg");//应答信息
+                String httpResponse = HttpUtil.post(payUrl, submitFromData, 60000);
+
+                Map<String, Object> resultMap = chinaPayUtil.strToMap(httpResponse);
+                Object respCode = resultMap.get("respCode");//应答码
+                Object respMsg = resultMap.get("respMsg");//应答信息
 
                 if ("0000".equals(respCode)) {
 
-                    String sign = resultMap.get("Signature");
+                    String sign = resultMap.get("Signature").toString();
                     if (StringUtils.isNotEmpty(sign)) {
                         secssUtil.verify(resultMap);
                     }
                     if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+
                         channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
                         channelRetMsg.setChannelErrCode(secssUtil.getErrCode());
-                        channelRetMsg.setChannelErrMsg("ChinaPay返回的应答数据【验签】失败:"+secssUtil.getErrMsg());
+                        channelRetMsg.setChannelErrMsg("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrMsg());
                         return res;
                     }
 
@@ -130,36 +150,50 @@ public class UnionQr extends UnionpayPaymentService {
                         String payReserved = (String) resultMap.get("PayReserved");
                         Map payReservedMap = JSON.parseObject(payReserved, Map.class);
                         codeUrl = (String) payReservedMap.get("QrCode");
-                        codeUrl = URLDecoder.decode(codeUrl, "UTF-8");
+
+                        if (CS.PAY_DATA_TYPE.PAY_URL.equals(bizRQ.getPayDataType())) {
+                            codeUrl = URLDecoder.decode(codeUrl, "UTF-8");
+                            res.setPayUrl(codeUrl);
+
+                        } else if (CS.PAY_DATA_TYPE.CODE_URL.equals(bizRQ.getPayDataType())) {
+
+                            if (StringUtils.isNotBlank(codeUrl)) {
+                                codeUrl = URLDecoder.decode(codeUrl, "UTF-8");
+                                BufferedImage bufferedImage = QrCodeUtil.generate(codeUrl, 300, 300);
+                                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                                ImageIO.write(bufferedImage, "png", outStream);
+                                byte[] bytes = outStream.toByteArray();
+                                String imageBase64 = cn.hutool.core.codec.Base64.encode(bytes);
+                                codeUrl = "data:image/png;base64," + imageBase64;
+
+                                res.setCodeImgUrl(codeUrl);
+                            }
+                        } else if (CS.PAY_DATA_TYPE.CODE_IMG_URL.equals(bizRQ.getPayDataType())) {
+
+                            if (StringUtils.isNotBlank(codeUrl)) {
+                                String imageBytes = "data:image/png;base64," + codeUrl;
+                                res.setCodeImgUrl(imageBytes);
+                            }
+                        }
+                        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
                     }
-                }
-
-                if (StringUtils.isNotBlank(codeUrl)) {
-
-                    BufferedImage bufferedImage = QrCodeUtil.generate(codeUrl, 300, 300);
-                    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                    ImageIO.write(bufferedImage, "png", outStream);
-                    byte[] bytes = outStream.toByteArray();
-                    String imageBase64 = cn.hutool.core.codec.Base64.encode(bytes);
-                    codeUrl = "data:image/png;base64," + imageBase64;
-
-                    if (CS.PAY_DATA_TYPE.CODE_IMG_URL.equals(res.getPayDataType())) {
-                        res.setCodeImgUrl(sysConfigService.getDBApplicationConfig().genScanImgUrl(codeUrl));
-                    } else {
-                        res.setCodeUrl(codeUrl);
-                    }
-                    res.setPayData(res.buildPayData());
-                    channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
-
                 } else {
+
                     channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-                    channelRetMsg.setChannelErrCode(respCode);
-                    channelRetMsg.setChannelErrMsg(respMsg);
+                    channelRetMsg.setChannelErrCode(respCode.toString());
+                    channelRetMsg.setChannelErrMsg(respMsg.toString());
                 }
             }
+            res.setPayDataType(res.buildPayDataType());
+            res.setPayData(res.buildPayData());
 
-        }catch (Exception ex){
+        } catch (Exception ex) {
+
+            log.error("支付过程中出现错误："+ex.getMessage()+"订单号:"+rq.getMchOrderNo());
+
             channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+            channelRetMsg.setChannelErrCode("9999");
+            channelRetMsg.setChannelErrMsg("支付过程中出现错误"+ex.getMessage());
         }
         return res;
     }
