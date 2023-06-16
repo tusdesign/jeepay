@@ -140,6 +140,7 @@ services:
     volumes:
       - ./logs/payment:/workspace/logs
       - ./conf/payment/application.yml:/workspace/application.yml
+      - /home/jeepay/upload:/home/jeepay/upload
   manager:
     build:
       context: .
@@ -164,6 +165,7 @@ services:
     volumes:
       - ./logs/manager:/workspace/logs
       - ./conf/manager/application.yml:/workspace/application.yml
+      - /home/jeepay/upload:/home/jeepay/upload
   merchant:
     build:
       context: .
@@ -188,6 +190,7 @@ services:
     volumes:
       - ./logs/merchant:/workspace/logs
       - ./conf/merchant/application.yml:/workspace/application.yml
+      - /home/jeepay/upload:/home/jeepay/upload
   ui-payment:
     build:
       context: ${UI_BASE_DIR}/jeepay-ui

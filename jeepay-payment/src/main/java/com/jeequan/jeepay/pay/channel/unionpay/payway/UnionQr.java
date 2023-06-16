@@ -59,7 +59,7 @@ public class UnionQr extends UnionpayPaymentService {
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
 
         Map<String, String> orderReserveMap = new HashMap<>();
-        orderReserveMap.put("OrderType", "0001");//0001表示在线订单
+        orderReserveMap.put("OrderType", "0001");//0001表示订单二维码
         orderReserveMap.put("OrderValidTime", DateUtil.getNextDate(DateUtil.getToday("yyyyMMdd"), 1) + "235959");
 
         if (StringUtils.isNotEmpty(bizRQ.getPayDataType())) {
@@ -74,7 +74,12 @@ public class UnionQr extends UnionpayPaymentService {
             bizRQ.setPayDataType(CS.PAY_DATA_TYPE.CODE_IMG_URL);
             orderReserveMap.put("qrPattern", "image");
         }
-        orderReserveMap.put("QrCodeProvider", "0002");
+
+        if(StringUtils.isEmpty(bizRQ.getQrCodeProvider())){
+            orderReserveMap.put("QrCodeProvider", "0001");
+        }else{
+            orderReserveMap.put("QrCodeProvider", bizRQ.getQrCodeProvider());
+        }
 
         String orderReserve = JSON.toJSONString(orderReserveMap);
 

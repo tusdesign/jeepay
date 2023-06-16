@@ -67,7 +67,7 @@ public class UnionPc extends UnionpayPaymentService {
         if (StringUtils.isNotEmpty(getNotifyUrl())) {
             paramMap.put("MerBgUrl", getNotifyUrl());
         }
-        if (StringUtils.isNotEmpty(getNotifyUrl())) {
+        if (StringUtils.isNotEmpty(bizRQ.getReturnUrl())) {
             paramMap.put("MerPageUrl", bizRQ.getReturnUrl());
         }
         if (StringUtils.isNotEmpty(bizRQ.getClientIp())) {
