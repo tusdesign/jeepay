@@ -82,63 +82,84 @@ public class UnionpayRefundService extends AbstractRefundService {
         channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
 
         JSONObject reqParams = new JSONObject();
-        reqParams.put("Version", normalMchParams.getPayVersion());
-        reqParams.put("MerId", refundOrder.getMchNo());
-        reqParams.put("MerOrderNo", refundOrder.getRefundOrderId());
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
+        try {
 
-        reqParams.put("TranDate", dateFormat.format(new Date()));
-        reqParams.put("TranTime", timeFormat.format(new Date()));
-        //原始交易订单号
-        reqParams.put("OriOrderNo", payOrder.getMchOrderNo());
-        //原始交易日期
-        reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));
-        reqParams.put("TranType", "0401");//退款交易
-        reqParams.put("BusiType", "0001");
-        reqParams.put("MerBgUrl", getNotifyUrl());
+            reqParams.put("Version", normalMchParams.getPayVersion());
+            reqParams.put("MerId", normalMchParams.getMchId());
+            reqParams.put("MerOrderNo", payOrder.getMchOrderNo());
 
-        if (chinaPayUtil.init(normalMchParams)) {
-            SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
-            secssUtil.sign(reqParams);
-            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-                channelRetMsg.setChannelErrCode(secssUtil.getErrCode());
-                channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
-                return channelRetMsg;
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
+
+            reqParams.put("TranDate", dateFormat.format(new Date()));
+            reqParams.put("TranTime", timeFormat.format(new Date()));
+            //原始交易订单号
+            reqParams.put("OriOrderNo", payOrder.getMchOrderNo());
+            //原始交易日期
+            reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));
+            reqParams.put("RefundAmt",String.valueOf(bizRQ.getRefundAmount()));//退款金额
+            reqParams.put("TranType", "0401");//退款交易
+            reqParams.put("BusiType", "0001");
+            reqParams.put("MerBgUrl", getNotifyUrl());
+
+            if (chinaPayUtil.init(normalMchParams)) {
+
+                SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
+                secssUtil.sign(reqParams);
+                if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+
+                    log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + payOrder.getMchOrderNo());
+                    channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+                    channelRetMsg.setChannelErrCode(secssUtil.getErrCode());
+                    channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
+                    return channelRetMsg;
+                }
+
+                String signature = secssUtil.getSign();
+                reqParams.put("Signature", signature);
+
+                String payUrl = UnionPayUtil.getPayUrl(normalMchParams.getBgPayUrl()) + UnionPayConfig.REFUNDPATH;
+                String resp = HttpUtil.post(payUrl, reqParams, 60000);
+
+                if (StringUtils.isEmpty(resp)) {
+                    channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.UNKNOWN); // 状态不明确
+                }
+
+                Map<String, Object> resultMap = chinaPayUtil.strToMap(resp);
+                String respCode = resultMap.get("respCode").toString();//应答码
+                String respMsg = resultMap.get("respMsg").toString();//应答信息
+
+                //请求 & 响应成功， 判断业务逻辑
+                if (respCode.equals("0000")) {
+                    secssUtil.verify(resultMap);
+                    if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                        log.info("{} >>> 退款成功", resultMap.get("MerOrderNo"));
+                        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
+                    }
+                } else {
+
+                    channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
+                    channelRetMsg.setChannelErrCode(respCode);
+                    channelRetMsg.setChannelErrMsg(respMsg);
+                }
             }
 
-            String signature = secssUtil.getSign();
-            reqParams.put("Signature", signature);
-
-            String payUrl= UnionPayUtil.getPayUrl(normalMchParams.getBgPayUrl())+ UnionPayConfig.REFUNDPATH;
-            String resp = HttpUtil.post(payUrl, reqParams, 60000);
-            Map<String, Object> resultMap = chinaPayUtil.strToMap(resp);
-
-            String sign = resultMap.get("Signature").toString();
-            if (StringUtils.isEmpty(sign)) {
-                secssUtil.verify(resultMap);
-            }
-            if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo").toString(); //渠道订单号
-                log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
-                throw ResponseException.buildText("ERROR");
-            }
-            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
-            return channelRetMsg;
+        } catch (Exception ex) {
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.SYS_ERROR);
+            log.error("退款过程中出现错误：" + ex.getMessage() + "订单号:" + refundOrder.getMchRefundNo());
         }
-        return ChannelRetMsg.confirmFail();
+        return channelRetMsg;
     }
 
     @Override
     public ChannelRetMsg query(RefundOrder refundOrder, MchAppConfigContext mchAppConfigContext) throws Exception {
 
-        PayOrder order= payOrderService.queryMchOrder(refundOrder.getMchNo(),refundOrder.getPayOrderId(),refundOrder.getMchRefundNo());
-        if(Objects.isNull(order)){
+        PayOrder order = payOrderService.queryMchOrder(refundOrder.getMchNo(), refundOrder.getPayOrderId(), refundOrder.getMchRefundNo());
+        if (Objects.isNull(order)) {
             return ChannelRetMsg.confirmFail(refundOrder.getMchRefundNo());
         }
-        return  qidiPayOrderQueryService.query(order,mchAppConfigContext);
+        return qidiPayOrderQueryService.query(order, mchAppConfigContext);
     }
 
 }

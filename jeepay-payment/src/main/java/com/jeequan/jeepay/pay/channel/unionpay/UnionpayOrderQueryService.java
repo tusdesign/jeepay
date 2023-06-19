@@ -56,9 +56,9 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
 
         try {
             if (chinaPayUtil.init(normalMchParams)) {
+
                 SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
                 secssUtil.sign(paramMap);
-
                 if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
                     log.error("ChinaPay签名失败：" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
                     return ChannelRetMsg.confirmFail(secssUtil.getErrCode(), secssUtil.getErrMsg());
@@ -73,21 +73,21 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
                 }
 
                 Map<String, Object> resultMap = chinaPayUtil.strToMap(resJSON); //解析同步应答字段
-                String sign = resultMap.get("Signature").toString(); //返回数据验签
-                if (StringUtils.isEmpty(sign)) {
-                    secssUtil.verify(resultMap);
-                }
-                if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                secssUtil.verify(resultMap);
+                if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                    return ChannelRetMsg.confirmSuccess(resultMap.get("MerOrderNo").toString());  //支付成功
+
+                } else {
                     String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo").toString(); // 渠道订单号
                     log.error("UnionPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
 
                     return ChannelRetMsg.confirmFail(resultMap.get("MerOrderNo").toString(), secssUtil.getErrCode(), secssUtil.getErrMsg());
                 }
-                return ChannelRetMsg.confirmSuccess(resultMap.get("MerOrderNo").toString());  //支付成功
             }
             return ChannelRetMsg.sysError("UnionPay配置参数初始化错误");
 
         } catch (Exception ex) {
+
             log.error("UnionPay查询失败:" + ex.getMessage() + "支付明细编号为：" + payOrder.getMchOrderNo());
             return ChannelRetMsg.waiting();
         }

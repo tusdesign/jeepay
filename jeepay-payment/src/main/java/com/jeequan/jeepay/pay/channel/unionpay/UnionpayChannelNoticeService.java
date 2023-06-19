@@ -58,14 +58,14 @@ public class UnionpayChannelNoticeService extends AbstractChannelNoticeService {
             //获取请求头参数到paramsMap
             JSONObject jsonParam = (JSONObject) params;
 
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            log.info("当前时间：" + sdf.format(new Date()) + "银联支付回调原始参数：" + jsonParam.toString());
+
             ChannelRetMsg result = new ChannelRetMsg();
             ResponseEntity okResponse = textResp("success");
             result.setChannelOrderId(jsonParam.getString("MerOrderNo"));
             result.setResponseEntity(okResponse); //响应数据
             result.setChannelState(ChannelRetMsg.ChannelState.WAITING);
-
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            log.info("当前时间：" + sdf.format(new Date()) + "银联支付回调原始参数：" + jsonParam.toString());
 
             boolean initResult = chinaPayUtil.init(unionPayNormalMchParams);
             if (initResult) {

@@ -75,9 +75,9 @@ public class UnionQr extends UnionpayPaymentService {
             orderReserveMap.put("qrPattern", "image");
         }
 
-        if(StringUtils.isEmpty(bizRQ.getQrCodeProvider())){
+        if (StringUtils.isEmpty(bizRQ.getQrCodeProvider())) {
             orderReserveMap.put("QrCodeProvider", "0001");
-        }else{
+        } else {
             orderReserveMap.put("QrCodeProvider", bizRQ.getQrCodeProvider());
         }
 
@@ -114,14 +114,14 @@ public class UnionQr extends UnionpayPaymentService {
 
             Boolean initResult = chinaPayUtil.init(params);
             if (initResult) {
-
                 SecssUtil secssUtil = chinaPayUtil.getSecssUtil();
                 secssUtil.sign(submitFromData);
+
                 if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
 
                     log.error(secssUtil.getErrCode() + "=" + secssUtil.getErrMsg());
                     channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-                    channelRetMsg.setChannelErrCode("9999");
+                    channelRetMsg.setChannelErrCode(secssUtil.getErrCode());
                     channelRetMsg.setChannelErrMsg(secssUtil.getErrMsg());
                 }
 
@@ -139,19 +139,9 @@ public class UnionQr extends UnionpayPaymentService {
 
                 if ("0000".equals(respCode)) {
 
-                    String sign = resultMap.get("Signature").toString();
-                    if (StringUtils.isNotEmpty(sign)) {
-                        secssUtil.verify(resultMap);
-                    }
-                    if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-
-                        channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
-                        channelRetMsg.setChannelErrCode(secssUtil.getErrCode());
-                        channelRetMsg.setChannelErrMsg("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrMsg());
-                        return res;
-                    }
-
+                    secssUtil.verify(resultMap);
                     if ("00".equals(secssUtil.getErrCode())) {
+
                         String payReserved = (String) resultMap.get("PayReserved");
                         Map payReservedMap = JSON.parseObject(payReserved, Map.class);
                         codeUrl = (String) payReservedMap.get("QrCode");
@@ -194,11 +184,11 @@ public class UnionQr extends UnionpayPaymentService {
 
         } catch (Exception ex) {
 
-            log.error("支付过程中出现错误："+ex.getMessage()+"订单号:"+rq.getMchOrderNo());
+            log.error("支付过程中出现错误：" + ex.getMessage() + "订单号:" + rq.getMchOrderNo());
 
             channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
             channelRetMsg.setChannelErrCode("9999");
-            channelRetMsg.setChannelErrMsg("支付过程中出现错误"+ex.getMessage());
+            channelRetMsg.setChannelErrMsg("支付过程中出现错误" + ex.getMessage());
         }
         return res;
     }
