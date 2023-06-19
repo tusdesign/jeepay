@@ -3,6 +3,7 @@ package com.jeequan.jeepay.pay.channel.unionpay.utils;
 
 import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
+import com.jeequan.jeepay.core.exception.ResponseException;
 import com.jeequan.jeepay.core.model.params.qidipay.QidipayNormalMchParams;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.core.utils.SpringBeansUtil;
@@ -81,8 +82,8 @@ public class UnionPayUtil {
 
         } catch (Exception ex) {
             log.error("UnionPay支付初始化配置出错" + ex.getMessage());
+            throw ResponseException.buildText("ERROR:"+"UnionPay支付初始化配置出错");
         }
-        return false;
     }
 
 //    public Map<String, String> getResponseMap(String resp) {
