@@ -87,7 +87,7 @@ public class UnionpayRefundService extends AbstractRefundService {
 
             reqParams.put("Version", normalMchParams.getPayVersion());
             reqParams.put("MerId", normalMchParams.getMchId());
-            reqParams.put("MerOrderNo", payOrder.getMchOrderNo());
+            reqParams.put("MerOrderNo", refundOrder.getRefundOrderId());
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
             SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
@@ -95,13 +95,13 @@ public class UnionpayRefundService extends AbstractRefundService {
             reqParams.put("TranDate", dateFormat.format(new Date()));
             reqParams.put("TranTime", timeFormat.format(new Date()));
             //原始交易订单号
-            reqParams.put("OriOrderNo", payOrder.getMchOrderNo());
+            reqParams.put("OriOrderNo", refundOrder.getMchRefundNo());
             //原始交易日期
             reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));
-            reqParams.put("RefundAmt",String.valueOf(bizRQ.getRefundAmount()));//退款金额
+            reqParams.put("RefundAmt",String.valueOf(refundOrder.getRefundAmount()));//退款金额
             reqParams.put("TranType", "0401");//退款交易
             reqParams.put("BusiType", "0001");
-            reqParams.put("MerBgUrl", getNotifyUrl());
+            reqParams.put("MerBgUrl", getNotifyUrl(refundOrder.getRefundOrderId()));
 
             if (chinaPayUtil.init(normalMchParams)) {
 

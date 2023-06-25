@@ -94,14 +94,8 @@ public class UnionQr extends UnionpayPaymentService {
         submitFromData.put("TranType", "0009");//0009表示银联二维码支付方式
         submitFromData.put("BusiType", "0001");//固定值
         submitFromData.put("CurryNo", "CNY");
-
-        if (StringUtils.isNotEmpty(bizRQ.getReturnUrl())) {
-            submitFromData.put("MerPageUrl", bizRQ.getReturnUrl()); //前台页面通知地址
-        }
-
-        if (StringUtils.isNotEmpty(getNotifyUrl())) {
-            submitFromData.put("MerBgUrl", getNotifyUrl()); //异步信息回调地址
-        }
+        submitFromData.put("MerPageUrl", getReturnUrl(bizRQ.getMchOrderNo())); //前台页面通知地址
+        submitFromData.put("MerBgUrl", getNotifyUrl(bizRQ.getMchOrderNo())); //异步信息回调地址
 
         if (StringUtils.isNotEmpty(bizRQ.getBody())) {
             submitFromData.put("CommodityMsg", bizRQ.getBody()); //订单描述信息

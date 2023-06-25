@@ -63,7 +63,7 @@ public class UnionpayChannelNoticeService extends AbstractChannelNoticeService {
 
             ChannelRetMsg result = new ChannelRetMsg();
             ResponseEntity okResponse = textResp("success");
-            result.setChannelOrderId(jsonParam.getString("MerOrderNo"));
+            result.setChannelOrderId(jsonParam.getString("AcqSeqId"));
             result.setResponseEntity(okResponse); //响应数据
             result.setChannelState(ChannelRetMsg.ChannelState.WAITING);
 
@@ -94,7 +94,7 @@ public class UnionpayChannelNoticeService extends AbstractChannelNoticeService {
             }
             return result;
 
-        } catch (Exception e) {
+        } catch (ResponseException e) {
 
             log.error("ChinaPay返回的应答数据【验签】失败:" + "=" + e.getMessage() + "支付明细编号为：" + payOrder.getMchOrderNo());
             throw ResponseException.buildText("ERROR" + e.getMessage());

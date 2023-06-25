@@ -86,30 +86,6 @@ public class UnionPayUtil {
         }
     }
 
-//    public Map<String, String> getResponseMap(String resp) {
-//
-//        String[] strs = resp.split("&", -1);
-//        Map<String, String> resultMap = new TreeMap<String, String>();
-//        for (String str : strs) {
-//            String[] keyValues = str.split("=", -1);
-//            if (keyValues.length < 2) {
-//                continue;
-//            }
-//            String key = keyValues[0];
-//            String value = keyValues[1];
-//            if (StringUtils.isEmpty(value)) {
-//                continue;
-//            }
-//            //响应字段解码
-//            try {
-//                value = URLDecoder.decode(value, "UTF-8");
-//            } catch (UnsupportedEncodingException e) {
-//                e.printStackTrace();
-//            }
-//            resultMap.put(key, value);
-//        }
-//        return resultMap;
-//    }
 
     /**
      * 字符串转换成map.
