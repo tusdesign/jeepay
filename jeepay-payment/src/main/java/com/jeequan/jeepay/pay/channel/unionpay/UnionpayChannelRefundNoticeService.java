@@ -73,7 +73,11 @@ public class UnionpayChannelRefundNoticeService extends AbstractChannelRefundNot
             result.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
             return result;
 
-        } catch (Exception e) {
+        } catch (ResponseException ex) {
+            log.error("error", ex);
+            throw ResponseException.buildText("ERROR");
+        } catch (Exception ex) {
+            log.error("error", ex);
             throw ResponseException.buildText("ERROR");
         }
     }
