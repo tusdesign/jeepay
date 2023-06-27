@@ -15,6 +15,7 @@ import com.jeequan.jeepay.pay.rqrs.msg.ChannelRetMsg;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -106,6 +107,9 @@ public class UnionpayChannelRefundNoticeService extends AbstractChannelRefundNot
                 }
             }
             return false;
+        } catch (SecurityException | BeansException | ResponseException ex) {
+            log.error("error", ex);
+            throw ResponseException.buildText("ERROR");
         } catch (Exception e) {
             log.error("error", e);
             throw ResponseException.buildText("ERROR");
