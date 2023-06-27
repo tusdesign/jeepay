@@ -62,7 +62,7 @@ public class UnionpayChannelRefundNoticeService extends AbstractChannelRefundNot
             String sign = jsonParam.getString("Signature");
             // 验证参数失败
             boolean verifyResult = verifyParams(jsonParam, sign, unionPayNormalMchParams);
-            if (!verifyResult) {
+            if (!verifyParams(jsonParam, sign, unionPayNormalMchParams)) {
                 throw ResponseException.buildText("ERROR");
             }
 

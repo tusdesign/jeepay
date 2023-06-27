@@ -72,7 +72,7 @@ public class UnionPc extends UnionpayPaymentService {
         }
 
         boolean initResult = unionPayUtil.init(params);
-        if (initResult) {
+        if (unionPayUtil.init(params)) {
 
             SecssUtil secssUtil = unionPayUtil.getSecssUtil();
             secssUtil.sign(paramMap);
