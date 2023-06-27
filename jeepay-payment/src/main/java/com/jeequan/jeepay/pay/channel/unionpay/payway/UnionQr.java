@@ -78,21 +78,21 @@ public class UnionQr extends UnionpayPaymentService {
         if (StringUtils.isEmpty(bizRQ.getQrCodeProvider())) {
             orderReserveMap.put("QrCodeProvider", "0001");
         } else {
-            orderReserveMap.put("QrCodeProvider", bizRQ.getQrCodeProvider());
+            orderReserveMap.put("QrCodeProvider", "0002");
         }
 
         String orderReserve = JSON.toJSONString(orderReserveMap);
 
         Map<String, Object> submitFromData = new HashMap();
         submitFromData.put("Version", params.getPayVersion());
-        submitFromData.put("AccessType", "0");//接入类型 0:商户身份接入 1:机构身份接入
+        submitFromData.put("AccessType", UnionPayConfig.ACCESS_TYPE_MCH);//接入类型 0:商户身份接入 1:机构身份接入
         submitFromData.put("MerId", params.getMchId());
         submitFromData.put("MerOrderNo", bizRQ.getMchOrderNo());
         submitFromData.put("TranDate", dateFormat.format(new Date()));
         submitFromData.put("TranTime", timeFormat.format(new Date()));
         submitFromData.put("OrderAmt", String.valueOf(bizRQ.getAmount()));
-        submitFromData.put("TranType", "0009");//0009表示银联二维码支付方式
-        submitFromData.put("BusiType", "0001");//固定值
+        submitFromData.put("TranType", UnionPayConfig.TRAN_TYPE.TRAN_QR);//0009表示银联二维码支付方式
+        submitFromData.put("BusiType", UnionPayConfig.BUSINESS_TYPE);//固定值
         submitFromData.put("CurryNo", "CNY");
         submitFromData.put("MerPageUrl", getReturnUrl(bizRQ.getMchOrderNo())); //前台页面通知地址
         submitFromData.put("MerBgUrl", getNotifyUrl(bizRQ.getMchOrderNo())); //异步信息回调地址
@@ -123,7 +123,7 @@ public class UnionQr extends UnionpayPaymentService {
                 submitFromData.put("Signature", signature);
 
                 String codeUrl = StringUtils.EMPTY;
-                String payUrl = chinaPayUtil.getPayUrl(params.getQrPayUrl()) + UnionPayConfig.QRPAYPATH;
+                String payUrl = chinaPayUtil.getPayUrl(params.getQrPayUrl()) + UnionPayConfig.QRPAY_PATH;
 
                 String httpResponse = HttpUtil.post(payUrl, submitFromData, 60000);
 
@@ -131,10 +131,10 @@ public class UnionQr extends UnionpayPaymentService {
                 Object respCode = resultMap.get("respCode");//应答码
                 Object respMsg = resultMap.get("respMsg");//应答信息
 
-                if ("0000".equals(respCode)) {
+                if (UnionPayConfig.RESPONSE_STATUS.equals(respCode)) {
 
                     secssUtil.verify(resultMap);
-                    if ("00".equals(secssUtil.getErrCode())) {
+                    if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
 
                         String payReserved = (String) resultMap.get("PayReserved");
                         Map payReservedMap = JSON.parseObject(payReserved, Map.class);
@@ -163,6 +163,9 @@ public class UnionQr extends UnionpayPaymentService {
                                 String imageBytes = "data:image/png;base64," + codeUrl;
                                 res.setCodeImgUrl(imageBytes);
                             }
+                        }else{
+                            codeUrl = URLDecoder.decode(codeUrl, "UTF-8");
+                            res.setPayUrl(codeUrl);
                         }
                         channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.WAITING);
                     }

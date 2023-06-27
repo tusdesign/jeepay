@@ -10,8 +10,10 @@ import com.jeequan.jeepay.core.utils.SpringBeansUtil;
 import com.jeequan.jeepay.pay.util.ChannelCertConfigKitBean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.*;
@@ -80,7 +82,10 @@ public class UnionPayUtil {
 
             return checkResult;
 
-        } catch (Exception ex) {
+        } catch (SecurityException | BeansException  ex) {
+            log.error("UnionPay支付初始化配置出错" + ex.getMessage());
+            throw ResponseException.buildText("ERROR:"+"UnionPay支付初始化配置出错");
+        }catch (Exception ex) {
             log.error("UnionPay支付初始化配置出错" + ex.getMessage());
             throw ResponseException.buildText("ERROR:"+"UnionPay支付初始化配置出错");
         }

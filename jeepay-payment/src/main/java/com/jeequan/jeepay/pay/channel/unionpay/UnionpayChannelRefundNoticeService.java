@@ -6,6 +6,7 @@ import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.RefundOrder;
 import com.jeequan.jeepay.core.exception.ResponseException;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.AbstractChannelRefundNoticeService;
 import com.jeequan.jeepay.pay.channel.unionpay.utils.UnionPayUtil;
@@ -90,17 +91,18 @@ public class UnionpayChannelRefundNoticeService extends AbstractChannelRefundNot
                 if (StringUtils.isEmpty(sign)) {
                     secssUtil.verify(jsonParam);
                 }
-                if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+
+                if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                    String orderStatus = jsonParam.getString("OrderStatus");
+                    if (UnionPayConfig.ORDER_STATUS_TYPE.ORDER_STATUS_SUCCESS.equals(orderStatus)
+                            || UnionPayConfig.ORDER_STATUS_TYPE.ORDER_REFUND_STATUS_SUCCESS.equals(orderStatus)) {
+                        return true;
+                    }
+                } else {
+
                     String outTradeNo = jsonParam.get("MerOrderNo") == null ? "" : jsonParam.getString("MerOrderNo"); //订单号
                     log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
                     throw ResponseException.buildText("ERROR");
-                }
-
-                if ("00".equals(secssUtil.getErrCode())) {
-                    String orderStatus = jsonParam.getString("OrderStatus");
-                    if ("0000".equals(orderStatus) || "1013".equals(orderStatus)) {
-                        return true;
-                    }
                 }
             }
             return false;

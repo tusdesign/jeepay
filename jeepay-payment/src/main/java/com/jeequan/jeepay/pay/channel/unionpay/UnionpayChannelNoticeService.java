@@ -6,6 +6,7 @@ import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.exception.ResponseException;
+import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.AbstractChannelNoticeService;
 import com.jeequan.jeepay.pay.channel.unionpay.utils.UnionPayUtil;
@@ -75,21 +76,20 @@ public class UnionpayChannelNoticeService extends AbstractChannelNoticeService {
                 if (StringUtils.isEmpty(sign)) {
                     secssUtil.verify(jsonParam);
                 }
-                if (!SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                    String outTradeNo = jsonParam.get("MerOrderNo") == null ? "" : jsonParam.getString("MerOrderNo"); // 渠道订单号
-                    log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
-                    throw ResponseException.buildText("ERROR");
-                }
 
-                if ("00".equals(secssUtil.getErrCode())) {
+                if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
                     String orderStatus = jsonParam.getString("OrderStatus");
-                    if ("0000".equals(orderStatus)) {
+                    if (UnionPayConfig.ORDER_STATUS_TYPE.ORDER_STATUS_SUCCESS.equals(orderStatus)) {
                         result.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_SUCCESS);
                     } else {
                         result.setChannelState(ChannelRetMsg.ChannelState.CONFIRM_FAIL);
                         result.setChannelErrCode(secssUtil.getErrCode());
                         result.setChannelErrMsg(secssUtil.getErrMsg());
                     }
+                } else {
+                    String outTradeNo = jsonParam.get("MerOrderNo") == null ? "" : jsonParam.getString("MerOrderNo"); // 渠道订单号
+                    log.error("ChinaPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
+                    throw ResponseException.buildText("ERROR");
                 }
             }
             return result;

@@ -99,8 +99,8 @@ public class UnionpayRefundService extends AbstractRefundService {
             //原始交易日期
             reqParams.put("OriTranDate", dateFormat.format(payOrder.getCreatedAt()));
             reqParams.put("RefundAmt",String.valueOf(refundOrder.getRefundAmount()));//退款金额
-            reqParams.put("TranType", "0401");//退款交易
-            reqParams.put("BusiType", "0001");
+            reqParams.put("TranType", UnionPayConfig.TRAN_TYPE.TRAN_REFUND);//退款交易
+            reqParams.put("BusiType", UnionPayConfig.BUSINESS_TYPE);
             reqParams.put("MerBgUrl", getNotifyUrl(refundOrder.getRefundOrderId()));
 
             if (chinaPayUtil.init(normalMchParams)) {
@@ -119,7 +119,7 @@ public class UnionpayRefundService extends AbstractRefundService {
                 String signature = secssUtil.getSign();
                 reqParams.put("Signature", signature);
 
-                String payUrl = UnionPayUtil.getPayUrl(normalMchParams.getBgPayUrl()) + UnionPayConfig.REFUNDPATH;
+                String payUrl = UnionPayUtil.getPayUrl(normalMchParams.getBgPayUrl()) + UnionPayConfig.REFUND_PATH;
                 String resp = HttpUtil.post(payUrl, reqParams, 60000);
 
                 if (StringUtils.isEmpty(resp)) {
@@ -131,7 +131,7 @@ public class UnionpayRefundService extends AbstractRefundService {
                 String respMsg = resultMap.get("respMsg").toString();//应答信息
 
                 //请求 & 响应成功， 判断业务逻辑
-                if (respCode.equals("0000")) {
+                if (respCode.equals(UnionPayConfig.RESPONSE_STATUS)) {
                     secssUtil.verify(resultMap);
                     if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
                         log.info("{} >>> 退款成功", resultMap.get("MerOrderNo"));

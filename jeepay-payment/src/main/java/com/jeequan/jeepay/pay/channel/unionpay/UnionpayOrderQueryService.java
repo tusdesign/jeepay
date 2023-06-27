@@ -46,8 +46,8 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
 
         Map<String, Object> paramMap = new HashMap<String, Object>();
         paramMap.put("Version", normalMchParams.getPayVersion());
-        paramMap.put("TranType", "0502");//交易类型，固定值：0502表示订单查询
-        paramMap.put("BusiType", "0001");//业务类型，固定值表示在线订单
+        paramMap.put("TranType", UnionPayConfig.TRAN_TYPE.TRAN_SELECT);//交易类型，固定值：0502表示订单查询
+        paramMap.put("BusiType", UnionPayConfig.BUSINESS_TYPE);//业务类型，固定值表示在线订单
         paramMap.put("MerOrderNo", payOrder.getMchOrderNo());
         paramMap.put("MerId", payOrder.getMchNo());
 
@@ -65,7 +65,7 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
                 }
 
                 paramMap.put("Signature", secssUtil.getSign());
-                String resJSON = HttpUtil.post(chinaPayUtil.getPayUrl(normalMchParams.getBgPayUrl()) + UnionPayConfig.BGPAYPATH, paramMap);
+                String resJSON = HttpUtil.post(chinaPayUtil.getPayUrl(normalMchParams.getBgPayUrl()) + UnionPayConfig.BACKPAY_PATH, paramMap);
 
                 log.info("查询订单 payorderId:{}, 返回结果:{}", payOrder.getPayOrderId(), resJSON);
                 if (StringUtils.isEmpty(resJSON)) {
