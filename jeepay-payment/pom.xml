@@ -132,12 +132,27 @@
             <artifactId>jeepay-sdk-java</artifactId>
             <version>pls-1.3.0</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.junit.jupiter</groupId>-->
-<!--            <artifactId>junit-jupiter-api</artifactId>-->
-<!--            <version>5.8.0-M1</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.bcprov.jdk</groupId>
+            <artifactId>platform</artifactId>
+            <version>1.1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../libs/bcprov-jdk15to18-171.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.chinapay.sdk</groupId>
+            <artifactId>china-sdk</artifactId>
+            <version>1.0.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../libs/chinapaysecure-sm-1.01.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>com.commons.codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.5.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/../libs/commons-codec-1.5.jar</systemPath>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -160,13 +175,19 @@
         <!-- resources资源配置项 -->
         <resources>
             <!-- 通用资源文件 -->
-            <resource><directory>src/main/resources</directory><includes><include>**/*.*</include></includes></resource>
-
-            <!-- 放置通用配置yml文件， 开发时仅配置一套参数即可。   实际生产环境下应在每个项目下 与jar同级目录下新建application.yml覆写对应参数。  -->
             <resource>
-                <directory>../conf/devCommons</directory>
-                <includes><include>**/*.yml</include></includes>
+                <directory>src/main/resources</directory>
+                <includes><include>**/*.*</include></includes>
             </resource>
+            <resource>
+                <directory>../libs</directory>
+                <includes><include>**/*.jar</include></includes>
+            </resource>
+            <!-- 放置通用配置yml文件， 开发时仅配置一套参数即可。   实际生产环境下应在每个项目下 与jar同级目录下新建application.yml覆写对应参数。  -->
+<!--            <resource>-->
+<!--                <directory>../conf/devCommons</directory>-->
+<!--                <includes><include>**/*.yml</include></includes>-->
+<!--            </resource>-->
         </resources>
 
         <plugins>

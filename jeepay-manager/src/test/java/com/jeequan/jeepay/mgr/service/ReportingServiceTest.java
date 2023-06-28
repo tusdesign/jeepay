@@ -25,12 +25,12 @@ class ReportingServiceTest {
 //    @Autowired(required = false)
 //    private ReportingService reportingService;
 
-    @Autowired(required = false)
-    private PayOrderExtendService payOrderExtendService;
-
-
-    @Autowired(required = false)
-    private PayOrderService payOrderService;
+//    @Autowired(required = false)
+//    private PayOrderExtendService payOrderExtendService;
+//
+//
+//    @Autowired(required = false)
+//    private PayOrderService payOrderService;
 
 //    @Test
 //    @Ignore
@@ -42,42 +42,42 @@ class ReportingServiceTest {
 //        Assert.isTrue(accountRQS.size() > 0, "test successfully");
 //    }
 
-    @Test
-    void OrderTest() throws Exception {
-
-        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<PayOrder> payOrderList= payOrderService.list(PayOrder.gw().ge(PayOrder::getCreatedAt,dateFormat.parse("2023-03-15 00:00:00")));
-        for (PayOrder order:payOrderList){
-
-            PayOrderExtend payOrderExtend = new PayOrderExtend();
-            payOrderExtend.setPayOrderId(order.getPayOrderId());
-
-            String extParam = order.getExtParam();
-            if (!ObjectUtils.isEmpty(extParam)) {
-                JSONObject jsonObject = JSONObject.parseObject(extParam);
-                if (jsonObject.getString("businessId")!=null&&!jsonObject.getString("businessId").isEmpty()) {
-                    payOrderExtend.setBusinessId(jsonObject.getString("businessId"));
-                }
-                if (jsonObject.getString("pid")!=null&&!jsonObject.getString("pid").isEmpty()) {
-                    payOrderExtend.setPid(jsonObject.getString("pid"));
-                }
-                if (jsonObject.getString("dealType")!=null&&!jsonObject.getString("dealType").isEmpty()) {
-                    payOrderExtend.setDealType(jsonObject.getString("dealType"));
-                }
-                if (jsonObject.getString("deptId")!=null&&!jsonObject.getString("deptId").isEmpty()) {
-                    payOrderExtend.setDeptId(jsonObject.getString("deptId"));
-                }
-                if (jsonObject.getString("type")!=null&&jsonObject.getString("type").isEmpty()) {
-                    payOrderExtend.setExtType(jsonObject.getString("type"));
-                }
-
-                PayOrderExtend orderExtend=payOrderExtendService.getOne(new QueryWrapper<PayOrderExtend>().eq("pay_order_id",order.getPayOrderId()));
-                if(Objects.isNull(orderExtend)){
-                    payOrderExtendService.save(payOrderExtend);
-                }
-            }
-        }
-
-        Assert.isTrue(true, "test successfully");
-    }
+//    @Test
+//    void OrderTest() throws Exception {
+//
+//        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        List<PayOrder> payOrderList= payOrderService.list(PayOrder.gw().ge(PayOrder::getCreatedAt,dateFormat.parse("2023-03-15 00:00:00")));
+//        for (PayOrder order:payOrderList){
+//
+//            PayOrderExtend payOrderExtend = new PayOrderExtend();
+//            payOrderExtend.setPayOrderId(order.getPayOrderId());
+//
+//            String extParam = order.getExtParam();
+//            if (!ObjectUtils.isEmpty(extParam)) {
+//                JSONObject jsonObject = JSONObject.parseObject(extParam);
+//                if (jsonObject.getString("businessId")!=null&&!jsonObject.getString("businessId").isEmpty()) {
+//                    payOrderExtend.setBusinessId(jsonObject.getString("businessId"));
+//                }
+//                if (jsonObject.getString("pid")!=null&&!jsonObject.getString("pid").isEmpty()) {
+//                    payOrderExtend.setPid(jsonObject.getString("pid"));
+//                }
+//                if (jsonObject.getString("dealType")!=null&&!jsonObject.getString("dealType").isEmpty()) {
+//                    payOrderExtend.setDealType(jsonObject.getString("dealType"));
+//                }
+//                if (jsonObject.getString("deptId")!=null&&!jsonObject.getString("deptId").isEmpty()) {
+//                    payOrderExtend.setDeptId(jsonObject.getString("deptId"));
+//                }
+//                if (jsonObject.getString("type")!=null&&jsonObject.getString("type").isEmpty()) {
+//                    payOrderExtend.setExtType(jsonObject.getString("type"));
+//                }
+//
+//                PayOrderExtend orderExtend=payOrderExtendService.getOne(new QueryWrapper<PayOrderExtend>().eq("pay_order_id",order.getPayOrderId()));
+//                if(Objects.isNull(orderExtend)){
+//                    payOrderExtendService.save(payOrderExtend);
+//                }
+//            }
+//        }
+//
+//        Assert.isTrue(true, "test successfully");
+//    }
 }

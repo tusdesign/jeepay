@@ -151,6 +151,7 @@ public class CS {
         String PLSPAY = "plspay";    // 计全支付plus
 
         String QIDIPAY="qidipay";    //QD支付
+        String UNIONPAY="unionpay";  //银联支付
     }
 
 
@@ -181,6 +182,8 @@ public class CS {
         String PP_PC = "PP_PC"; // Paypal 支付
 
         String QIDI_APP = "QIDI_APP";  //QiDi-APP支付
+        String UNION_PC ="UNION_PC"; //银联 pc端支付
+        String UNION_QR ="UNION_QR";//银联 二难码付款
     }
 
     //支付数据包 类型
