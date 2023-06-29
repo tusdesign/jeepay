@@ -66,7 +66,7 @@ public class UnionQr extends UnionpayPaymentService {
             if (bizRQ.getPayDataType().equals(CS.PAY_DATA_TYPE.PAY_URL)) {
                 orderReserveMap.put("qrPattern", "link");
             } else if (bizRQ.getPayDataType().equals(CS.PAY_DATA_TYPE.CODE_URL)) {
-                orderReserveMap.put("qrPattern", "image");
+                orderReserveMap.put("qrPattern", "link");
             } else if (bizRQ.getPayDataType().equals(CS.PAY_DATA_TYPE.CODE_IMG_URL)) {
                 orderReserveMap.put("qrPattern", "image");
             }

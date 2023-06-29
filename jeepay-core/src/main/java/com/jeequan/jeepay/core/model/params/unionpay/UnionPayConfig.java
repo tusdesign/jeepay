@@ -12,8 +12,8 @@ public class UnionPayConfig {
     public static final String ENCODING = "UTF-8";//默认编码.
 
 
-    public static final int ACCESS_TYPE_MCH = 0;//以商户身份接入
-    public static final int ACCESS_TYPE_ISV = 1;//以机构身份接入
+    public static final String ACCESS_TYPE_MCH = "0";//以商户身份接入
+    public static final String ACCESS_TYPE_ISV = "1";//以机构身份接入
 
     public static final String BUSINESS_TYPE = "0001";//业务类型
 
