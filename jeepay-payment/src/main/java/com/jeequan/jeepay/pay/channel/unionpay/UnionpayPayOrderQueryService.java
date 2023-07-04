@@ -5,7 +5,6 @@ import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
-import com.jeequan.jeepay.core.exception.ResponseException;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.IPayOrderQueryService;
@@ -24,7 +23,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class UnionpayOrderQueryService implements IPayOrderQueryService {
+public class UnionpayPayOrderQueryService implements IPayOrderQueryService {
 
     @Autowired
     private UnionPayUtil chinaPayUtil;

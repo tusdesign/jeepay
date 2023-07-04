@@ -22,7 +22,6 @@ import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.entity.RefundOrder;
-import com.jeequan.jeepay.core.exception.ResponseException;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.AbstractRefundService;
@@ -59,7 +58,7 @@ public class UnionpayRefundService extends AbstractRefundService {
     private PayOrderService payOrderService;
 
     @Autowired
-    private UnionpayOrderQueryService qidiPayOrderQueryService;
+    private UnionpayPayOrderQueryService unionpayPayOrderQueryService;
 
     @Override
     public String getIfCode() {
@@ -159,7 +158,7 @@ public class UnionpayRefundService extends AbstractRefundService {
         if (Objects.isNull(order)) {
             return ChannelRetMsg.confirmFail(refundOrder.getMchRefundNo());
         }
-        return qidiPayOrderQueryService.query(order, mchAppConfigContext);
+        return unionpayPayOrderQueryService.query(order, mchAppConfigContext);
     }
 
 }

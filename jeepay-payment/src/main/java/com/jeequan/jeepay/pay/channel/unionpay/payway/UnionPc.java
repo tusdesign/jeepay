@@ -59,6 +59,7 @@ public class UnionPc extends UnionpayPaymentService {
         paramMap.put("TranDate", dateFormat.format(new Date()));
         paramMap.put("TranTime", timeFormat.format(new Date()));
         paramMap.put("OrderAmt", String.valueOf(bizRQ.getAmount()));//单位：分
+        paramMap.put("TranType", UnionPayConfig.TRAN_TYPE.TRAN_BANK_PERSONAL);//个人网银
         paramMap.put("BusiType", UnionPayConfig.BUSINESS_TYPE);//固定值:表示银行卡的快捷支付
         paramMap.put("MerPageUrl", getReturnUrl(bizRQ.getMchOrderNo())); //前台页面通知地址
         paramMap.put("MerBgUrl", getNotifyUrl(bizRQ.getMchOrderNo())); //异步信息回调地址
