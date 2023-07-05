@@ -5,7 +5,6 @@ import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
-import com.jeequan.jeepay.core.exception.ResponseException;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
 import com.jeequan.jeepay.pay.channel.IPayOrderQueryService;
@@ -24,7 +23,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class UnionpayOrderQueryService implements IPayOrderQueryService {
+public class UnionpayPayOrderQueryService implements IPayOrderQueryService {
 
     @Autowired
     private UnionPayUtil chinaPayUtil;
@@ -49,7 +48,7 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
         paramMap.put("TranType", UnionPayConfig.TRAN_TYPE.TRAN_SELECT);//交易类型，固定值：0502表示订单查询
         paramMap.put("BusiType", UnionPayConfig.BUSINESS_TYPE);//业务类型，固定值表示在线订单
         paramMap.put("MerOrderNo", payOrder.getMchOrderNo());
-        paramMap.put("MerId", payOrder.getMchNo());
+        paramMap.put("MerId", normalMchParams.getMchId());
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd"); //原交易日期，格式: yyyyMMdd
         paramMap.put("TranDate", dateFormat.format(payOrder.getCreatedAt()));
@@ -72,24 +71,30 @@ public class UnionpayOrderQueryService implements IPayOrderQueryService {
                     return ChannelRetMsg.waiting(); //查询处理中
                 }
 
+                String merOrderNo = payOrder.getMchOrderNo();
                 Map<String, Object> resultMap = chinaPayUtil.strToMap(resJSON); //解析同步应答字段
-                secssUtil.verify(resultMap);
-                if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
-                    return ChannelRetMsg.confirmSuccess(resultMap.get("MerOrderNo").toString());  //支付成功
+                Object respCode = resultMap.get("respCode");//应答码
+                Object respMsg = resultMap.get("respMsg");//应答信息
 
+                if (UnionPayConfig.RESPONSE_STATUS.equals(respCode)) {
+
+                    secssUtil.verify(resultMap);
+                    if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                        return ChannelRetMsg.confirmSuccess(merOrderNo);  //查询成功
+                    } else {
+                        return ChannelRetMsg.sysError("UnionPay查询返回参数验证错误:" + secssUtil.getErrMsg());
+                    }
                 } else {
-                    String outTradeNo = resultMap.get("MerOrderNo") == null ? "" : resultMap.get("MerOrderNo").toString(); // 渠道订单号
-                    log.error("UnionPay返回的应答数据【验签】失败:" + secssUtil.getErrCode() + "=" + secssUtil.getErrMsg() + "支付明细编号为：" + outTradeNo);
-
-                    return ChannelRetMsg.confirmFail(resultMap.get("MerOrderNo").toString(), secssUtil.getErrCode(), secssUtil.getErrMsg());
+                    log.error("UnionPay返回的应答数据【验签】失败:" + respCode.toString() + "=" + respMsg.toString() + "支付明细编号为：" + merOrderNo);
+                    return ChannelRetMsg.sysError(respMsg.toString());
                 }
             }
-            return ChannelRetMsg.sysError("UnionPay配置参数初始化错误");
+            return ChannelRetMsg.waiting();
 
         } catch (Exception ex) {
 
             log.error("UnionPay查询失败:" + ex.getMessage() + "支付明细编号为：" + payOrder.getMchOrderNo());
-            return ChannelRetMsg.waiting();
+            return ChannelRetMsg.unknown("UnionPay查询失败:" + ex.getMessage() + "支付明细编号为：" + payOrder.getMchOrderNo());
         }
     }
 
