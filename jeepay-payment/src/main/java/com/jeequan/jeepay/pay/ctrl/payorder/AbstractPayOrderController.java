@@ -72,6 +72,22 @@ public abstract class AbstractPayOrderController extends ApiController {
         return unifiedOrder(wayCode, bizRQ, null);
     }
 
+    /** 统一下单 (新建订单模式) **/
+    protected ApiRes unifiedOrderV2(String wayCode, UnifiedOrderRQ bizRQ,String urlOrderId){
+
+        if (StringUtils.isEmpty(urlOrderId)){
+            return unifiedOrder(wayCode, bizRQ, null);
+        }else{
+
+            PayOrder payOrder = payOrderService.getById(urlOrderId);
+            if(payOrder == null || payOrder.getState() != PayOrder.STATE_INIT){
+                throw new BizException("订单不存在或状态不正确");
+            }
+            return unifiedOrder(wayCode, bizRQ, payOrder);
+        }
+    }
+
+
     /** 统一下单 **/
     protected ApiRes unifiedOrder(String wayCode, UnifiedOrderRQ bizRQ, PayOrder payOrder){
 

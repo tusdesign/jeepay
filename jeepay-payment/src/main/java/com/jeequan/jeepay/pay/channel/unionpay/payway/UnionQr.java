@@ -54,6 +54,11 @@ public class UnionQr extends UnionpayPaymentService {
         ChannelRetMsg channelRetMsg = new ChannelRetMsg();
         res.setChannelRetMsg(channelRetMsg);
 
+        if(bizRQ.getPayMode().equals(CS.PAY_MODE.PAY_TO_ACCOUNT)){
+           channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.SYS_ERROR);
+           return res;
+        }
+
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");

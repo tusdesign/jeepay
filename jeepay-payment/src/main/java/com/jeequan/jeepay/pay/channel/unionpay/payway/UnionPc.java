@@ -3,6 +3,7 @@ package com.jeequan.jeepay.pay.channel.unionpay.payway;
 import com.chinapay.secss.SecssConstants;
 import com.chinapay.secss.SecssUtil;
 
+import com.jeequan.jeepay.core.constants.CS;
 import com.jeequan.jeepay.core.entity.PayOrder;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayConfig;
 import com.jeequan.jeepay.core.model.params.unionpay.UnionPayNormalMchParams;
@@ -46,6 +47,11 @@ public class UnionPc extends UnionpayPaymentService {
         ChinaPcOrderRS res = ApiResBuilder.buildSuccess(ChinaPcOrderRS.class);
         ChannelRetMsg channelRetMsg = new ChannelRetMsg();
         res.setChannelRetMsg(channelRetMsg);
+
+        if(bizRQ.getPayMode().equals(CS.PAY_MODE.PAY_TO_ACCOUNT)){
+            channelRetMsg.setChannelState(ChannelRetMsg.ChannelState.SYS_ERROR);
+            return res;
+        }
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
         SimpleDateFormat timeFormat = new SimpleDateFormat("HHmmss");
