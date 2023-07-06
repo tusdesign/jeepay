@@ -30,26 +30,34 @@ public class CS {
     //登录图形验证码缓存时间，单位：s
     public static final int VERCODE_CACHE_TIME = 60;
 
-    /** 系统类型定义 **/
-    public interface SYS_TYPE{
+    /**
+     * 系统类型定义
+     **/
+    public interface SYS_TYPE {
         String MCH = "MCH";
         String MGR = "MGR";
         Map<String, String> SYS_TYPE_MAP = new HashMap<>();
     }
+
     static {
         SYS_TYPE.SYS_TYPE_MAP.put(SYS_TYPE.MCH, "商户系统");
         SYS_TYPE.SYS_TYPE_MAP.put(SYS_TYPE.MGR, "运营平台");
     }
 
-    /** yes or no **/
+    /**
+     * yes or no
+     **/
     public static final byte NO = 0;
     public static final byte YES = 1;
 
-    /** 通用 可用 / 禁用 **/
+    /**
+     * 通用 可用 / 禁用
+     **/
     public static final int PUB_USABLE = 1;
     public static final int PUB_DISABLE = 0;
 
     public static final Map<Integer, String> PUB_USABLE_MAP = new HashMap<>();
+
     static {
         PUB_USABLE_MAP.put(PUB_USABLE, "正常");
         PUB_USABLE_MAP.put(PUB_DISABLE, "停用");
@@ -76,7 +84,9 @@ public class CS {
     public static final byte SEX_MALE = 1;
     public static final byte SEX_FEMALE = 2;
 
-    /** 默认密码 */
+    /**
+     * 默认密码
+     */
     public static final String DEFAULT_PWD = "jeepay666";
 
 
@@ -84,7 +94,8 @@ public class CS {
      * 允许上传的的图片文件格式，需要与 WebSecurityConfig对应
      */
     public static final Set<String> ALLOW_UPLOAD_IMG_SUFFIX = new HashSet<>();
-    static{
+
+    static {
         ALLOW_UPLOAD_IMG_SUFFIX.add("jpg");
         ALLOW_UPLOAD_IMG_SUFFIX.add("png");
         ALLOW_UPLOAD_IMG_SUFFIX.add("jpeg");
@@ -100,23 +111,33 @@ public class CS {
     public static final String ACCESS_TOKEN_NAME = "iToken";
 
     /** ！！不同系统请放置不同的redis库 ！！ **/
-    /** 缓存key: 当前用户所有用户的token集合  example: TOKEN_1001_HcNheNDqHzhTIrT0lUXikm7xU5XY4Q */
+    /**
+     * 缓存key: 当前用户所有用户的token集合  example: TOKEN_1001_HcNheNDqHzhTIrT0lUXikm7xU5XY4Q
+     */
     public static final String CACHE_KEY_TOKEN = "TOKEN_%s_%s";
-    public static String getCacheKeyToken(Long sysUserId, String uuid){
+
+    public static String getCacheKeyToken(Long sysUserId, String uuid) {
         return String.format(CACHE_KEY_TOKEN, sysUserId, uuid);
     }
 
-    /** 图片验证码 缓存key **/
+    /**
+     * 图片验证码 缓存key
+     **/
     public static final String CACHE_KEY_IMG_CODE = "img_code_%s";
-    public static String getCacheKeyImgCode(String imgToken){
+
+    public static String getCacheKeyImgCode(String imgToken) {
         return String.format(CACHE_KEY_IMG_CODE, imgToken);
     }
 
-    /** 回调URL的格前缀  */
+    /**
+     * 回调URL的格前缀
+     */
     public static final String PAY_RETURNURL_FIX_ONLY_JUMP_PREFIX = "ONLYJUMP_";
 
-    /** 登录认证类型 **/
-    public interface AUTH_TYPE{
+    /**
+     * 登录认证类型
+     **/
+    public interface AUTH_TYPE {
 
         byte LOGIN_USER_NAME = 1; //登录用户名
         byte TELPHONE = 2; //手机号
@@ -131,7 +152,7 @@ public class CS {
 
 
     //菜单类型
-    public interface ENT_TYPE{
+    public interface ENT_TYPE {
 
         String MENU_LEFT = "ML";  //左侧显示菜单
         String MENU_OTHER = "MO";  //其他菜单
@@ -140,7 +161,7 @@ public class CS {
     }
 
     //接口类型
-    public interface IF_CODE{
+    public interface IF_CODE {
 
         String ALIPAY = "alipay";   // 支付宝官方支付
 
@@ -150,13 +171,13 @@ public class CS {
         String PPPAY = "pppay";     // Paypal 支付
         String PLSPAY = "plspay";    // 计全支付plus
 
-        String QIDIPAY="qidipay";    //QD支付
-        String UNIONPAY="unionpay";  //银联支付
+        String QIDIPAY = "qidipay";    //QD支付
+        String UNIONPAY = "unionpay";  //银联支付
     }
 
 
     //支付方式代码
-    public interface PAY_WAY_CODE{
+    public interface PAY_WAY_CODE {
 
         // 特殊支付方式
         String QR_CASHIER = "QR_CASHIER"; //  ( 通过二维码跳转到收银台完成支付， 已集成获取用户ID的实现。  )
@@ -182,8 +203,8 @@ public class CS {
         String PP_PC = "PP_PC"; // Paypal 支付
 
         String QIDI_APP = "QIDI_APP";  //QiDi-APP支付
-        String UNION_PC ="UNION_PC"; //银联 pc端支付
-        String UNION_QR ="UNION_QR";//银联 二难码付款
+        String UNION_PC = "UNION_PC"; //银联 pc端支付
+        String UNION_QR = "UNION_QR";//银联 二难码付款
     }
 
     //支付数据包 类型
@@ -201,8 +222,14 @@ public class CS {
 
 
     //接口版本
-    public interface PAY_IF_VERSION{
+    public interface PAY_IF_VERSION {
         String WX_V2 = "V2";  //微信接口版本V2
         String WX_V3 = "V3";  //微信接口版本V3
+    }
+
+    //支付模式
+    public interface PAY_MODE {
+        Byte PAY_TO_ACCOUNT = 0;  //记录账本
+        Byte PAY_TO_BANK = 1;  //对接银行支付
     }
 }

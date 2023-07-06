@@ -29,28 +29,31 @@ import com.jeequan.jeepay.service.impl.PayWayService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /*
-* 统一下单 controller
-*
-* @author terrfly
-* @site https://www.jeequan.com
-* @date 2021/6/8 17:27
-*/
+ * 统一下单 controller
+ *
+ * @author terrfly
+ * @site https://www.jeequan.com
+ * @date 2021/6/8 17:27
+ */
 @Slf4j
 @RestController
 public class UnifiedOrderController extends AbstractPayOrderController {
 
-    @Autowired private PayWayService payWayService;
-    @Autowired private ConfigContextQueryService configContextQueryService;
+    @Autowired
+    private PayWayService payWayService;
+    @Autowired
+    private ConfigContextQueryService configContextQueryService;
 
     /**
      * 统一下单接口
-     * **/
-    @PostMapping("/api/pay/unifiedOrder")
-    public ApiRes unifiedOrder(){
+     **/
+    @PostMapping(value = {"/api/pay/unifiedOrder", "/api/pay/unifiedOrder/{payOrderId}"})
+    public ApiRes unifiedOrder(@PathVariable(value = "payOrderId", required = false) String urlOrderId) {
 
         //获取参数 & 验签
         UnifiedOrderRQ rq = getRQByWithMchSign(UnifiedOrderRQ.class);
@@ -58,19 +61,19 @@ public class UnifiedOrderController extends AbstractPayOrderController {
         UnifiedOrderRQ bizRQ = buildBizRQ(rq);
 
         //实现子类的res
-        ApiRes apiRes = unifiedOrder(bizRQ.getWayCode(), bizRQ);
-        if(apiRes.getData() == null){
+        ApiRes apiRes = unifiedOrderV2(bizRQ.getWayCode(), bizRQ, urlOrderId);
+        if (apiRes.getData() == null) {
             return apiRes;
         }
 
-        UnifiedOrderRS bizRes = (UnifiedOrderRS)apiRes.getData();
+        UnifiedOrderRS bizRes = (UnifiedOrderRS) apiRes.getData();
 
         //聚合接口，返回的参数
         UnifiedOrderRS res = new UnifiedOrderRS();
         BeanUtils.copyProperties(bizRes, res);
 
         //只有 订单生成（QR_CASHIER） || 支付中 || 支付成功返回该数据
-        if(bizRes.getOrderState() != null && (bizRes.getOrderState() == PayOrder.STATE_INIT || bizRes.getOrderState() == PayOrder.STATE_ING || bizRes.getOrderState() == PayOrder.STATE_SUCCESS) ){
+        if (bizRes.getOrderState() != null && (bizRes.getOrderState() == PayOrder.STATE_INIT || bizRes.getOrderState() == PayOrder.STATE_ING || bizRes.getOrderState() == PayOrder.STATE_SUCCESS)) {
             res.setPayDataType(bizRes.buildPayDataType());
             res.setPayData(bizRes.buildPayData());
         }
@@ -79,25 +82,25 @@ public class UnifiedOrderController extends AbstractPayOrderController {
     }
 
 
-    private UnifiedOrderRQ buildBizRQ(UnifiedOrderRQ rq){
+    private UnifiedOrderRQ buildBizRQ(UnifiedOrderRQ rq) {
 
         //支付方式  比如： ali_bar
         String wayCode = rq.getWayCode();
 
         //jsapi 收银台聚合支付场景 (不校验是否存在payWayCode)
-        if(CS.PAY_WAY_CODE.QR_CASHIER.equals(wayCode)){
+        if (CS.PAY_WAY_CODE.QR_CASHIER.equals(wayCode)) {
             return rq.buildBizRQ();
         }
 
         //如果是自动分类条码
-        if(CS.PAY_WAY_CODE.AUTO_BAR.equals(wayCode)){
+        if (CS.PAY_WAY_CODE.AUTO_BAR.equals(wayCode)) {
 
-            AutoBarOrderRQ bizRQ = (AutoBarOrderRQ)rq.buildBizRQ();
+            AutoBarOrderRQ bizRQ = (AutoBarOrderRQ) rq.buildBizRQ();
             wayCode = JeepayKit.getPayWayCodeByBarCode(bizRQ.getAuthCode());
             rq.setWayCode(wayCode.trim());
         }
 
-        if(payWayService.count(PayWay.gw().eq(PayWay::getWayCode, wayCode)) <= 0){
+        if (payWayService.count(PayWay.gw().eq(PayWay::getWayCode, wayCode)) <= 0) {
             throw new BizException("不支持的支付方式");
         }
 
