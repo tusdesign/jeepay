@@ -75,17 +75,19 @@ public class UnionpayPayOrderQueryService implements IPayOrderQueryService {
                 Map<String, Object> resultMap = chinaPayUtil.strToMap(resJSON); //解析同步应答字段
                 Object respCode = resultMap.get("respCode");//应答码
                 Object respMsg = resultMap.get("respMsg");//应答信息
+                Object orderStatus = resultMap.get("OrderStatus");//订单状态
 
                 if (UnionPayConfig.RESPONSE_STATUS.equals(respCode)) {
 
                     secssUtil.verify(resultMap);
-                    if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode())) {
+                    if (SecssConstants.SUCCESS.equals(secssUtil.getErrCode()) &&
+                            UnionPayConfig.ORDER_STATUS_TYPE.ORDER_STATUS_SUCCESS.equals(orderStatus)) {
                         return ChannelRetMsg.confirmSuccess(merOrderNo);  //查询成功
                     } else {
                         return ChannelRetMsg.sysError("UnionPay查询返回参数验证错误:" + secssUtil.getErrMsg());
                     }
                 } else {
-                    log.error("UnionPay返回的应答数据【验签】失败:" + respCode.toString() + "=" + respMsg.toString() + "支付明细编号为：" + merOrderNo);
+                    log.error("UnionPay返回的应答数据出错:" + respCode.toString() + "=" + respMsg.toString() + "支付明细编号为：" + merOrderNo);
                     return ChannelRetMsg.sysError(respMsg.toString());
                 }
             }
