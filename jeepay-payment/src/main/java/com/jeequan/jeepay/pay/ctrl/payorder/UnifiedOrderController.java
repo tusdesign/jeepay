@@ -49,10 +49,43 @@ public class UnifiedOrderController extends AbstractPayOrderController {
     @Autowired
     private ConfigContextQueryService configContextQueryService;
 
+
+    /**
+     * 统一下单接口
+     * **/
+    @PostMapping("/api/pay/unifiedOrder")
+    public ApiRes unifiedOrder(){
+
+        //获取参数 & 验签
+        UnifiedOrderRQ rq = getRQByWithMchSign(UnifiedOrderRQ.class);
+
+        UnifiedOrderRQ bizRQ = buildBizRQ(rq);
+
+        //实现子类的res
+        ApiRes apiRes = unifiedOrder(bizRQ.getWayCode(), bizRQ);
+        if(apiRes.getData() == null){
+            return apiRes;
+        }
+
+        UnifiedOrderRS bizRes = (UnifiedOrderRS)apiRes.getData();
+
+        //聚合接口，返回的参数
+        UnifiedOrderRS res = new UnifiedOrderRS();
+        BeanUtils.copyProperties(bizRes, res);
+
+        //只有 订单生成（QR_CASHIER） || 支付中 || 支付成功返回该数据
+        if(bizRes.getOrderState() != null && (bizRes.getOrderState() == PayOrder.STATE_INIT || bizRes.getOrderState() == PayOrder.STATE_ING || bizRes.getOrderState() == PayOrder.STATE_SUCCESS) ){
+            res.setPayDataType(bizRes.buildPayDataType());
+            res.setPayData(bizRes.buildPayData());
+        }
+
+        return ApiRes.okWithSign(res, configContextQueryService.queryMchApp(rq.getMchNo(), rq.getAppId()).getAppSecret());
+    }
+
     /**
      * 统一下单接口
      **/
-    @PostMapping(value = {"/api/pay/unifiedOrder", "/api/pay/unifiedOrder/{payOrderId}"})
+    @PostMapping("/api/pay/unifiedOrder/{payOrderId}")
     public ApiRes unifiedOrder(@PathVariable(value = "payOrderId", required = false) String urlOrderId) {
 
         //获取参数 & 验签
@@ -80,6 +113,10 @@ public class UnifiedOrderController extends AbstractPayOrderController {
 
         return ApiRes.okWithSign(res, configContextQueryService.queryMchApp(rq.getMchNo(), rq.getAppId()).getAppSecret());
     }
+
+
+
+
 
 
     private UnifiedOrderRQ buildBizRQ(UnifiedOrderRQ rq) {
