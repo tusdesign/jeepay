@@ -26,7 +26,7 @@ import lombok.Data;
 * @date 2021/6/8 17:40
 */
 @Data
-public class QiDiPayOrderRQ extends AbstractMchAppRQ {
+public class QidiPayOrderRQ extends AbstractMchAppRQ {
 
     /** 商户订单号 **/
     private String mchOrderNo;

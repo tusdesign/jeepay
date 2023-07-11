@@ -21,11 +21,12 @@ import com.jeequan.jeepay.core.entity.PayWay;
 import com.jeequan.jeepay.core.exception.BizException;
 import com.jeequan.jeepay.core.model.ApiRes;
 import com.jeequan.jeepay.core.utils.JeepayKit;
-import com.jeequan.jeepay.pay.rqrs.payorder.QiDiPayOrderRQ;
+import com.jeequan.jeepay.pay.rqrs.payorder.QidiPayOrderRQ;
 import com.jeequan.jeepay.pay.rqrs.payorder.UnifiedOrderRQ;
 import com.jeequan.jeepay.pay.rqrs.payorder.UnifiedOrderRS;
 import com.jeequan.jeepay.pay.rqrs.payorder.payway.AutoBarOrderRQ;
 import com.jeequan.jeepay.pay.service.ConfigContextQueryService;
+import com.jeequan.jeepay.service.impl.PayOrderService;
 import com.jeequan.jeepay.service.impl.PayWayService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -48,15 +49,19 @@ public class UnifiedOrderController extends AbstractPayOrderController {
 
     @Autowired
     private PayWayService payWayService;
+
+    @Autowired
+    private PayOrderService payOrderService;
+
     @Autowired
     private ConfigContextQueryService configContextQueryService;
 
 
     /**
      * 统一下单接口
-     * **/
+     **/
     @PostMapping("/api/pay/unifiedOrder")
-    public ApiRes unifiedOrder(){
+    public ApiRes unifiedOrder() {
 
         //获取参数 & 验签
         UnifiedOrderRQ rq = getRQByWithMchSign(UnifiedOrderRQ.class);
@@ -65,48 +70,6 @@ public class UnifiedOrderController extends AbstractPayOrderController {
 
         //实现子类的res
         ApiRes apiRes = unifiedOrder(bizRQ.getWayCode(), bizRQ);
-        if(apiRes.getData() == null){
-            return apiRes;
-        }
-
-        UnifiedOrderRS bizRes = (UnifiedOrderRS)apiRes.getData();
-
-        //聚合接口，返回的参数
-        UnifiedOrderRS res = new UnifiedOrderRS();
-        BeanUtils.copyProperties(bizRes, res);
-
-        //只有 订单生成（QR_CASHIER） || 支付中 || 支付成功返回该数据
-        if(bizRes.getOrderState() != null && (bizRes.getOrderState() == PayOrder.STATE_INIT || bizRes.getOrderState() == PayOrder.STATE_ING || bizRes.getOrderState() == PayOrder.STATE_SUCCESS) ){
-            res.setPayDataType(bizRes.buildPayDataType());
-            res.setPayData(bizRes.buildPayData());
-        }
-
-        return ApiRes.okWithSign(res, configContextQueryService.queryMchApp(rq.getMchNo(), rq.getAppId()).getAppSecret());
-    }
-
-    /**
-     * 统一下单接口
-     **/
-    @PostMapping("/api/pay/unifiedOrder/{payOrderId}")
-    public ApiRes unifiedOrder(@PathVariable(value = "payOrderId", required = false) String urlOrderId) {
-
-        //获取参数 & 验签
-        QiDiPayOrderRQ rq = getRQByWithMchSign(QiDiPayOrderRQ.class);
-
-        if(StringUtils.isAllEmpty(rq.getMchOrderNo(), rq.getPayOrderId())){
-            throw new BizException("mchOrderNo 和 payOrderId不能同时为空");
-        }
-
-        UnifiedOrderRQ bizRQ0 = new UnifiedOrderRQ();
-        bizRQ0.setChannelExtra(rq.getChannelExtra());
-        bizRQ0.setMchOrderNo(rq.getMchOrderNo());
-        bizRQ0.setAppId(rq.getAppId());
-        bizRQ0.setMchNo(rq.getMchNo());
-
-        UnifiedOrderRQ bizRQ = buildBizRQ(bizRQ0);
-
-        //实现子类的res
-        ApiRes apiRes = unifiedOrderV2(bizRQ.getWayCode(), bizRQ, urlOrderId);
         if (apiRes.getData() == null) {
             return apiRes;
         }
@@ -126,9 +89,57 @@ public class UnifiedOrderController extends AbstractPayOrderController {
         return ApiRes.okWithSign(res, configContextQueryService.queryMchApp(rq.getMchNo(), rq.getAppId()).getAppSecret());
     }
 
+    /**
+     * 统一下单二次支付接口
+     **/
+    @PostMapping("/api/pay/unifiedOrder/restart")
+    public ApiRes unifiedOrderRestart() {
 
+        //获取参数 & 验签
+        QidiPayOrderRQ rq = getRQByWithMchSign(QidiPayOrderRQ.class);
 
+        if (StringUtils.isAllEmpty(rq.getMchOrderNo(), rq.getPayOrderId())) {
+            throw new BizException("mchOrderNo 和 payOrderId不能同时为空");
+        }
 
+        PayOrder payOrder = payOrderService.queryMchOrder(rq.getMchNo(), rq.getPayOrderId(), rq.getMchOrderNo());
+        if (payOrder == null) {
+            throw new BizException("订单不存在");
+        }
+        if (payOrder.getState() != PayOrder.STATE_INIT) {
+            throw new BizException("订单不存在或状态不正确");
+        }
+
+        UnifiedOrderRQ bizRQ = new UnifiedOrderRQ();
+
+        bizRQ.setWayCode(payOrder.getWayCode());
+        bizRQ.setChannelExtra(rq.getChannelExtra());
+        bizRQ.setMchOrderNo(rq.getMchOrderNo());
+        bizRQ.setAppId(rq.getAppId());
+        bizRQ.setMchNo(rq.getMchNo());
+
+        UnifiedOrderRQ bizRQNew = buildBizRQ(bizRQ);
+
+        //实现子类的res
+        ApiRes apiRes = unifiedOrder(bizRQNew.getWayCode(), bizRQNew, payOrder);
+        if (apiRes.getData() == null) {
+            return apiRes;
+        }
+
+        UnifiedOrderRS bizRes = (UnifiedOrderRS) apiRes.getData();
+
+        //聚合接口，返回的参数
+        UnifiedOrderRS res = new UnifiedOrderRS();
+        BeanUtils.copyProperties(bizRes, res);
+
+        //只有 订单生成（QR_CASHIER） || 支付中 || 支付成功返回该数据
+        if (bizRes.getOrderState() != null && (bizRes.getOrderState() == PayOrder.STATE_INIT || bizRes.getOrderState() == PayOrder.STATE_ING || bizRes.getOrderState() == PayOrder.STATE_SUCCESS)) {
+            res.setPayDataType(bizRes.buildPayDataType());
+            res.setPayData(bizRes.buildPayData());
+        }
+
+        return ApiRes.okWithSign(res, configContextQueryService.queryMchApp(rq.getMchNo(), rq.getAppId()).getAppSecret());
+    }
 
 
     private UnifiedOrderRQ buildBizRQ(UnifiedOrderRQ rq) {
