@@ -1,3 +1,3 @@
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
-docker build -t oci.tuxm.art:8443/tusdesign/jeepay-activemq:latest ./docker/activemq
-docker push oci.tuxm.art:8443/tusdesign/jeepay-activemq:latest
+docker build -t $HARBOR_URL/tusdesign/jeepay-activemq:$TAG ./docker/activemq
+docker push $HARBOR_URL/tusdesign/jeepay-activemq:$TAG
